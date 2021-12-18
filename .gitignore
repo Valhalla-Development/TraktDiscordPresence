@@ -1,0 +1,8 @@
+# Irritating file create by Mac
+.DS_Store
+
+# Random stuff
+node_modules/
+
+# Config file
+config.json
