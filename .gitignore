@@ -3,6 +3,7 @@
 
 # Random stuff
 node_modules/
+yarn.lock
 
 # Config file
 config.json
