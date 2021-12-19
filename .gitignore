@@ -4,6 +4,7 @@
 # Random stuff
 node_modules/
 yarn.lock
+.eslintrc.json
 
 # Config file
 config.json

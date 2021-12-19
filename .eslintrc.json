@@ -1,7 +1,0 @@
-{
-    "extends": "tesseract",
-    "rules": {
-        "max-len": "off",
-        "camelcase": "off"
-    }
-}
