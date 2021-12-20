@@ -5,12 +5,14 @@
   "repository": "https://github.com/RagnarLothbrok-Odin/trakt-discord-presence.git",
   "author": "Ragnar Lothbrok <30740511+RagnarLothbrok-Odin@users.noreply.github.com>",
   "license": "MIT",
+  "dependencies": {
+    "chalk": "^4.1.2",
+    "discord-rpc": "^4.0.1",
+    "luxon": "^2.2.0",
+    "trakt.tv": "^8.1.1"
+  },
   "devDependencies": {
     "eslint": "^8.5.0",
     "eslint-config-tesseract": "^0.3.0"
-  },
-  "dependencies": {
-    "discord-rpc": "^4.0.1",
-    "trakt.tv": "^8.1.1"
   }
 }
