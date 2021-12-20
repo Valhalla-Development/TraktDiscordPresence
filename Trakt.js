@@ -1,6 +1,9 @@
 const Trakt = require('trakt.tv');
+const DiscordRPC = require('discord-rpc');
 const fs = require('fs');
 const { prompt } = require('enquirer');
+const { DateTime } = require('luxon');
+const chalk = require('chalk');
 
 // If the config file does not exist, run the questios() function, which will create the file and auth the account
 if (!fs.existsSync('./config.json')) {
@@ -26,8 +29,86 @@ const options = {
 const trakt = new Trakt(options);
 trakt.import_token(oAuth);
 
+// Collect arguments from the input
+const discordClientID = process.argv.slice(2)[0];
+
+// Check if ID was supplied
+if (!discordClientID) {
+	console.log(chalk.red.bold('Please supply a valid Discord Client ID.\nIf you are unsure where to find this, please refer to the README.md file.'));
+	process.exit(1);
+}
+
+// Create the Discord RPC client
+// Create client
+const rpc = new DiscordRPC.Client({ transport: 'ipc' });
+
+const spawnRPC = async () => {
+	try {
+		// Log when connected
+		await rpc.on('ready', () => {
+			console.log(chalk.green.bold('Successfully connect to Discord!'));
+		});
+		// Attempt to log in
+		await rpc.login({ clientId: discordClientID });
+	} catch (err) {
+		console.log(chalk.red.bold('Failed to connect to Discord. Retrying in 10 seconds.'));
+		// Retry every 10 seconds until successful.
+		setTimeout(() => {
+			spawnRPC();
+		}, 10000);
+	}
+};
+
+// Spawn the RPC
+spawnRPC();
+
+// Get Trakt user
+const updateStatus = async () => {
+	const user = await trakt.users.settings();
+	const watching = await trakt.users.watching({ username: user.user.username });
+
+	// Check if the user is currently watching something and if not, run on a timeout.
+	if (!watching) {
+		rpc.clearActivity();
+		console.log(`${formatDate()} | ${chalk.red.bold.underline('Trakt:')} Not Playing.`);
+		setTimeout(() => {
+			updateStatus();
+			console.log(`${formatDate()} | ${chalk.red.bold.underline('Trakt:')} Not Playing.`);
+		}, 10000);
+		return;
+	}
+
+	const type = {};
+
+	type.smallImageKey = 'play';
+	type.largeImageKey = 'trakt';
+	type.startTimestamp = new Date(watching.started_at);
+
+	// Set the activity
+	if (watching.type === 'movie') {
+		const { movie } = watching;
+		type.details = `${movie.title} (${movie.year})`;
+	} else if (watching.type === 'episode') {
+		const { show, episode } = watching;
+		type.details = `${show.title}`;
+		type.state = `S${episode.season}E${episode.number} (${episode.title})`;
+	}
+	rpc.setActivity({ ...type });
+
+	console.log(`${formatDate()} | ${chalk.red.bold.underline('Trakt Playing:')} ${type.details}${type.state ? ` - ${type.state}` : ''}`);
+
+	// Log state in console
+	setTimeout(() => {
+		console.log(`${formatDate()} | ${chalk.red.bold.underline('Trakt Playing:')} ${type.details}${type.state ? ` - ${type.state}` : ''}`);
+	}, 5000);
+};
+
+// Update status
+updateStatus();
+
+// Function to ask the user for their Trakt credentials
 async function questions() {
-	console.log('Please follow the on-screen instructions on authorizing your account.\n**NOTE: Your credentials are private and should not be shared, your credentials will be stored in a file called `config.json`.\n');
+	console.log(chalk.green.bold('Please follow the on-screen instructions on authorizing your account.\n**NOTE: Your credentials are private and should not be shared, your credentials will be stored in a file called `config.json`.\n'));
 
 	const response = await prompt([
 		{
@@ -74,13 +155,13 @@ async function questions() {
 		const token = await qTrakt.export_token();
 		arr.oAuth = token;
 	} catch {
-		console.log('\nAn invalid token was provided! Please try again by restarting the program.');
+		console.log(chalk.red.bold('\nAn invalid token was provided! Please try again by restarting the program.'));
 		process.exit(1);
 	}
 
 	await fs.writeFileSync('./config.json', JSON.stringify(arr, null, 3));
 
-	console.log('\nPlease restart this program.');
+	console.log(chalk.green.bold('\nPlease restart this program.'));
 	process.exit(1);
 }
 
@@ -113,10 +194,17 @@ async function tokenExpired(id, secret) {
 		config.oAuth = token;
 		fs.writeFileSync('./config.json', JSON.stringify(config, null, 3));
 	} catch {
-		console.log('\nAn invalid token was provided! Please try again by restarting the program.');
+		console.log(chalk.red.bold('\nAn invalid token was provided! Please try again by restarting the program.'));
 		process.exit(1);
 	}
 
-	console.log('\nPlease restart this program.');
+	console.log(chalk.green.bold('\nPlease restart this program.'));
 	process.exit(1);
+}
+
+// Function to format the current date
+function formatDate() {
+	const now = DateTime.now();
+
+	return chalk.green.italic(`${now.toLocaleString(DateTime.DATE_HUGE)} - ${now.toLocaleString(DateTime.TIME_WITH_SHORT_OFFSET)}`);
 }
