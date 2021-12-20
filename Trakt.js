@@ -53,7 +53,7 @@ const spawnRPC = async () => {
 	} catch (err) {
 		console.log(chalk.red.bold('Failed to connect to Discord. Retrying in 10 seconds.'));
 		// Retry every 10 seconds until successful.
-		setTimeout(() => {
+		setInterval(() => {
 			spawnRPC();
 		}, 10000);
 	}
@@ -71,7 +71,7 @@ const updateStatus = async () => {
 	if (!watching) {
 		rpc.clearActivity();
 		console.log(`${formatDate()} | ${chalk.red.bold.underline('Trakt:')} Not Playing.`);
-		setTimeout(() => {
+		setInterval(() => {
 			updateStatus();
 			console.log(`${formatDate()} | ${chalk.red.bold.underline('Trakt:')} Not Playing.`);
 		}, 10000);
@@ -98,7 +98,7 @@ const updateStatus = async () => {
 	console.log(`${formatDate()} | ${chalk.red.bold.underline('Trakt Playing:')} ${type.details}${type.state ? ` - ${type.state}` : ''}`);
 
 	// Log state in console
-	setTimeout(() => {
+	setInterval(() => {
 		console.log(`${formatDate()} | ${chalk.red.bold.underline('Trakt Playing:')} ${type.details}${type.state ? ` - ${type.state}` : ''}`);
 	}, 5000);
 };
