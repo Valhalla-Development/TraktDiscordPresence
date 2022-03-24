@@ -46,7 +46,7 @@ const spawnRPC = async () => {
 	try {
 		// Log when connected
 		await rpc.on('ready', () => {
-			console.log(chalk.green.bold('Successfully connect to Discord!'));
+			console.log(chalk.green.bold('Successfully connected to Discord!'));
 		});
 		// Attempt to log in
 		await rpc.login({ clientId: discordClientID });
