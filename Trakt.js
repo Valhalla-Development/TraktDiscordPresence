@@ -50,12 +50,16 @@ const spawnRPC = async () => {
 		});
 		// Attempt to log in
 		await rpc.login({ clientId: discordClientID });
+		// Update status
+		updateStatus();
 	} catch (err) {
-		console.log(chalk.red.bold('Failed to connect to Discord. Retrying in 10 seconds.'));
-		// Retry every 10 seconds until successful.
-		setInterval(() => {
+		rpc.clearActivity();
+		console.log(chalk.red.bold('Failed to connect to Discord. Retrying in 15 seconds.'));
+		// Retry every 15 seconds until successful.
+		setTimeout(() => {
 			spawnRPC();
-		}, 10000);
+		}, 15000);
+		return;
 	}
 };
 
@@ -63,48 +67,43 @@ const spawnRPC = async () => {
 spawnRPC();
 
 // Get Trakt user
-const updateStatus = async () => {
+async function updateStatus() {
 	const user = await trakt.users.settings();
 	const watching = await trakt.users.watching({ username: user.user.username });
 
-	// Check if the user is currently watching something and if not, run on a timeout.
-	if (!watching) {
-		rpc.clearActivity();
-		console.log(`${formatDate()} | ${chalk.red.bold.underline('Trakt:')} Not Playing.`);
-		setInterval(() => {
-			updateStatus();
-			console.log(`${formatDate()} | ${chalk.red.bold.underline('Trakt:')} Not Playing.`);
-		}, 10000);
-		return;
-	}
+	if (watching) {
+		const type = {};
 
-	const type = {};
+		type.smallImageKey = 'play';
+		type.largeImageKey = 'trakt';
+		type.startTimestamp = new Date(watching.started_at);
 
-	type.smallImageKey = 'play';
-	type.largeImageKey = 'trakt';
-	type.startTimestamp = new Date(watching.started_at);
+		// Set the activity
+		if (watching.type === 'movie') {
+			const { movie } = watching;
+			type.details = `${movie.title} (${movie.year})`;
+		} else if (watching.type === 'episode') {
+			const { show, episode } = watching;
+			type.details = `${show.title}`;
+			type.state = `S${episode.season}E${episode.number} (${episode.title})`;
+		}
+		rpc.setActivity({ ...type });
 
-	// Set the activity
-	if (watching.type === 'movie') {
-		const { movie } = watching;
-		type.details = `${movie.title} (${movie.year})`;
-	} else if (watching.type === 'episode') {
-		const { show, episode } = watching;
-		type.details = `${show.title}`;
-		type.state = `S${episode.season}E${episode.number} (${episode.title})`;
-	}
-	rpc.setActivity({ ...type });
-
-	console.log(`${formatDate()} | ${chalk.red.bold.underline('Trakt Playing:')} ${type.details}${type.state ? ` - ${type.state}` : ''}`);
-
-	// Log state in console
-	setInterval(() => {
 		console.log(`${formatDate()} | ${chalk.red.bold.underline('Trakt Playing:')} ${type.details}${type.state ? ` - ${type.state}` : ''}`);
-	}, 5000);
-};
+	} else {
+		// Check if the user is currently watching something and if not, run on a timeout.
+		console.log(`${formatDate()} | ${chalk.red.bold.underline('Trakt:')} Not Playing.`);
+		setTimeout(() => {
+			updateStatus();
+			rpc.clearActivity();
+		}, 15000);
+	}
+}
 
-// Update status
-updateStatus();
+// Log state in console
+setInterval(() => {
+	updateStatus();
+}, 15000);
 
 // Function to ask the user for their Trakt credentials
 async function questions() {
