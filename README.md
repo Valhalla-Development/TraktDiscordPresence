@@ -8,6 +8,8 @@
 # Trakt Discord Presence
 Set your Discord presence according to what you are watching on [Trakt](https://trakt.tv/)
 
+Due to Discord limitations, your Discord client **MUST** be running on the same device as this script.
+
 
 ## NOTE:
 This project technically does function in its current form, but it is **NOT** finished.
