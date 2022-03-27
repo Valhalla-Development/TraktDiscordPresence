@@ -52,6 +52,11 @@ const spawnRPC = async () => {
 		await rpc.login({ clientId: discordClientID });
 		// Update status
 		updateStatus();
+
+		// Update status every 15 seconds
+		setInterval(() => {
+			updateStatus();
+		}, 15000);
 	} catch (err) {
 		rpc.clearActivity();
 		console.log(chalk.red.bold('Failed to connect to Discord. Retrying in 15 seconds.'));
@@ -99,11 +104,6 @@ async function updateStatus() {
 		}, 15000);
 	}
 }
-
-// Log state in console
-setInterval(() => {
-	updateStatus();
-}, 15000);
 
 // Function to ask the user for their Trakt credentials
 async function questions() {
