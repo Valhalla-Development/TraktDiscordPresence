@@ -32,9 +32,12 @@ Feel free to open any issues/PR request on how I can improve this, following is 
 2. [Download Node.js](https://nodejs.org) 
     * `LTS` preferred, Current should work but `LTS` is recommended
     * Ensure that `Node` is installed to `PATH`, it should be an option while installing
-3. [Install Yarn](https://yarnpkg.com)
+3. [Install Yarn](https://classic.yarnpkg.com/en/docs/install)
     * Open CMD/terminal/console on your device
-    * Point your CMD/terminal/console the folder that you extracted the source to, by using the `cd` command, an example follows:
+    * Run the following command
+
+          npm install --global yarn
+    * Point your CMD/terminal/console to the folder that you extracted the source to, by using the `cd` command, an example follows:
 
           cd /Users/ragnarlothbrok/Downloads/trakt-discord-presence
 4. Install the necessary packages with the following command:
