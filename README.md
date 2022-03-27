@@ -71,7 +71,7 @@ Feel free to open any issues/PR request on how I can improve this, following is 
 
 ## Functionality
 If you follow all the steps correctly, you should see an output similar to the following
-<img src="https://raw.githubusercontent.com/RagnarLothbrok-Odin/temp-repo/main/example.png">
+<img src="https://raw.githubusercontent.com/RagnarLothbrok-Odin/trakt-discord-presence/main/example.png">
 
 
 ## License
