@@ -11,14 +11,6 @@ Set your Discord presence according to what you are watching on [Trakt](https://
 Due to Discord limitations, your Discord client **MUST** be running on the same device as this script.
 
 
-## NOTE:
-This project technically does function in its current form, but it is **NOT** finished.
-Feel free to open any issues/PR request on how I can improve this, following is a to-do list
-
-- [ ] Move main code into a function
-- [ ] Detect when lose connection to Discord
-
-
 ## Prerequisites
 * [Node.js](https://nodejs.org)
 * [Yarn](https://yarnpkg.com)
