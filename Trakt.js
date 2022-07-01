@@ -17,6 +17,7 @@ const { clientId, clientSecret, oAuth } = require('./config.json');
 // Checks if the oAuth has expired and runs tokenExpired() function if it has
 if (Date.now() > oAuth.expires) {
 	tokenExpired(clientId, clientSecret);
+	return;
 }
 
 // Trakt client options
