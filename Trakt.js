@@ -99,10 +99,7 @@ async function updateStatus() {
 	} else {
 		// Check if the user is currently watching something and if not, run on a timeout.
 		console.log(`${formatDate()} | ${chalk.red.bold.underline('Trakt:')} Not Playing.`);
-		setTimeout(() => {
-			updateStatus();
-			rpc.clearActivity();
-		}, 15000);
+		rpc.clearActivity();
 	}
 }
 
