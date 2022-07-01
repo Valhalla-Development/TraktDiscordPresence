@@ -10,20 +10,20 @@ Set your Discord presence according to what you are watching on [Trakt](https://
 
 Due to Discord limitations, your Discord client **MUST** be running on the same device as this script.
 
-
 ## Prerequisites
 * [Node.js](https://nodejs.org)
 * [Yarn](https://yarnpkg.com)
 * [Trakt.tv Account](https://trakt.tv)
 * [Discord Account](https://discord.com)
 
-
 ## Installation
 1. [Download the source code](https://github.com/RagnarLothbrok-Odin/trakt-discord-presence/archive/refs/heads/main.zip)
     * Extract the folder that was downloaded to your desired location using your preferred software, [WinRar for example](https://www.win-rar.com)
+
 2. [Download Node.js](https://nodejs.org) 
     * `LTS` preferred, Current should work but `LTS` is recommended
     * Ensure that `Node` is installed to `PATH`, it should be an option while installing
+
 3. [Install Yarn](https://classic.yarnpkg.com/en/docs/install)
     * Open CMD/terminal/console on your device
     * Run the following command
@@ -32,11 +32,11 @@ Due to Discord limitations, your Discord client **MUST** be running on the same 
     * Point your CMD/terminal/console to the folder that you extracted the source to, by using the `cd` command, an example follows:
 
           cd /Users/ragnarlothbrok/Downloads/trakt-discord-presence
+
 4. Install the necessary packages with the following command:
 
        yarn install
     * A message will indicate when this step is completed
-
 
 ## Setup
 1. [Create your Trakt application](https://trakt.tv/oauth/applications)
@@ -52,25 +52,27 @@ Due to Discord limitations, your Discord client **MUST** be running on the same 
     * Set the cover image by clicking the box under where it say `Select Image` _(Set this image to the file named_ `trakt.png` _(you can find this file in the folder named_ `images` _in the extracted source)_
     * Click `Add Image(s)` and upload the `3` images you can find in the folder named `images` in the extracted source
 
-
 ## Usage
 1. Run the program by running the following command:
 
        node .
+
 2. You will be asked for your [Trakt Client ID](https://trakt.tv/oauth/applications), if you did not create an application, ensure you read the [Setup section of this page](https://github.com/RagnarLothbrok-Odin/trakt-discord-presence/blob/main/README.md#setup)
+
 3. You will be asked for your [Trakt Client Secret](https://trakt.tv/oauth/applications)
+
 4. You will be asked for your [Discord Client ID](https://discord.com/developers/applications), if you did not create an application, ensure you read the [Setup section of this page](https://github.com/RagnarLothbrok-Odin/trakt-discord-presence/blob/main/README.md#setup)
+
 5. You will be provided a `URL`, you must paste this link into a browser of your choosing
     * Once you visit this `URL`, a code will be provided, you must paste this code into your CMD/terminal/console
+    
 6. Finally, you must now run the following code to start the program.
 
           node .
 
-
 ## Functionality
 If you follow all the steps correctly, you should see an output similar to the following
 <img src="https://raw.githubusercontent.com/RagnarLothbrok-Odin/trakt-discord-presence/main/example.png">
-
 
 ## License
 <a href="https://choosealicense.com/licenses/mit/"><img src="https://raw.githubusercontent.com/johnturner4004/readme-generator/master/src/components/assets/images/mit.svg" height=40 /></a>
