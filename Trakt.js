@@ -12,7 +12,7 @@ if (!fs.existsSync('./config.json')) {
 }
 
 // Fetching the data from config.json
-const { clientId, clientSecret, oAuth } = require('./config.json');
+const { clientId, clientSecret, oAuth, discordClientID } = require('./config.json');
 
 // Checks if the oAuth has expired and runs tokenExpired() function if it has
 if (Date.now() > oAuth.expires) {
@@ -29,15 +29,6 @@ const options = {
 // Spawn new Trakt client with options
 const trakt = new Trakt(options);
 trakt.import_token(oAuth);
-
-// Collect arguments from the input
-const discordClientID = process.argv.slice(2)[0];
-
-// Check if ID was supplied
-if (!discordClientID) {
-	console.log(chalk.red.bold('Please supply a valid Discord Client ID.\nIf you are unsure where to find this, please refer to the README.md file.'));
-	process.exit(1);
-}
 
 // Create the Discord RPC client
 // Create client
@@ -117,6 +108,11 @@ async function questions() {
 			type: 'input',
 			name: 'clientSecret',
 			message: 'What is your Trakt Client Secret?'
+		},
+		{
+			type: 'input',
+			name: 'discordClientID',
+			message: 'What is your Discord Client ID?'
 		}
 	]).catch(() => {
 		console.error('The user aborted the request.');
@@ -146,6 +142,7 @@ async function questions() {
 	const arr = {};
 	arr.clientId = response.clientId;
 	arr.clientSecret = response.clientSecret;
+	arr.discordClientID = response.discordClientID;
 
 	try {
 		await qTrakt.exchange_code(auth.oAuth, null);

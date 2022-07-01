@@ -67,11 +67,12 @@ Feel free to open any issues/PR request on how I can improve this, following is 
        node .
 2. You will be asked for your [Trakt Client ID](https://trakt.tv/oauth/applications), if you did not create an application, ensure you read the [Setup section of this page](https://github.com/RagnarLothbrok-Odin/trakt-discord-presence/blob/main/README.md#setup)
 3. You will be asked for your [Trakt Client Secret](https://trakt.tv/oauth/applications)
-4. You will be provided a `URL`, you must paste this link into a browser of your choosing
+4. You will be asked for your [Discord Client ID](https://discord.com/developers/applications), if you did not create an application, ensure you read the [Setup section of this page](https://github.com/RagnarLothbrok-Odin/trakt-discord-presence/blob/main/README.md#setup)
+5. You will be provided a `URL`, you must paste this link into a browser of your choosing
     * Once you visit this `URL`, a code will be provided, you must paste this code into your CMD/terminal/console
-5. Finally, you must now run the following code, replacing the string of numbers, with your [Discord Client ID](https://discord.com/developers/applications), if you did not create an application, ensure you read the [Setup section of this page](https://github.com/RagnarLothbrok-Odin/trakt-discord-presence/blob/main/README.md#setup)
+6. Finally, you must now run the following code to start the program.
 
-          node . 123456789098765432
+          node .
 
 
 ## Functionality
