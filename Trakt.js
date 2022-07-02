@@ -53,7 +53,7 @@ const spawnRPC = async () => {
 		rpc.clearActivity();
 		console.log(chalk.red.bold('Failed to connect to Discord. Retrying in 15 seconds.'));
 		// Retry every 15 seconds until successful.
-		setTimeout(() => {
+		setInterval(() => {
 			spawnRPC();
 		}, 15000);
 		return;
