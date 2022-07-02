@@ -17,7 +17,7 @@ Due to Discord limitations, your Discord client **MUST** be running on the same 
 * [Discord Account](https://discord.com)
 
 ## Installation
-1. [Download the source code](https://github.com/RagnarLothbrok-Odin/trakt-discord-presence/archive/refs/heads/main.zip)
+1. [Download the latest release](hhttps://github.com/RagnarLothbrok-Odin/trakt-discord-presence/releases)
     * Extract the folder that was downloaded to your desired location using your preferred software, [WinRar for example](https://www.win-rar.com)
 
 2. [Download Node.js](https://nodejs.org) 
