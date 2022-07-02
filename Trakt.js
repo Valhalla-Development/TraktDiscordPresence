@@ -12,7 +12,7 @@ if (!fs.existsSync('./config.json')) {
 }
 
 // Fetching the data from config.json
-const { clientId, clientSecret, oAuth, discordClientID } = require('./config.json');
+const { clientId, clientSecret, oAuth, discordClientId } = require('./config.json');
 
 // Checks if the oAuth has expired and runs tokenExpired() function if it has
 if (Date.now() > oAuth.expires) {
@@ -41,7 +41,7 @@ const spawnRPC = async () => {
 			console.log(chalk.green.bold('Successfully connected to Discord!'));
 		});
 		// Attempt to log in
-		await rpc.login({ clientId: discordClientID });
+		await rpc.login({ clientId: discordClientId });
 		// Update status
 		updateStatus();
 
@@ -111,7 +111,7 @@ async function questions() {
 		},
 		{
 			type: 'input',
-			name: 'discordClientID',
+			name: 'discordClientId',
 			message: 'What is your Discord Client ID?'
 		}
 	]).catch(() => {
@@ -142,7 +142,7 @@ async function questions() {
 	const arr = {};
 	arr.clientId = response.clientId;
 	arr.clientSecret = response.clientSecret;
-	arr.discordClientID = response.discordClientID;
+	arr.discordClientId = response.discordClientId;
 
 	try {
 		await qTrakt.exchange_code(auth.oAuth, null);
