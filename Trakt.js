@@ -32,10 +32,19 @@ trakt.import_token(oAuth);
 
 // Create the Discord RPC client
 // Create client
-const rpc = new DiscordRPC.Client({ transport: 'ipc' });
+
+// Set rpc as null
+let rpc;
 
 const spawnRPC = async () => {
 	try {
+		// Attempt to spawn an RPC Client
+		rpc = new DiscordRPC.Client({ transport: 'ipc' });
+
+		// Log when error is thrown
+		rpc.on('error', (err) => {
+			console.log(err);
+		});
 		// Log when connected
 		await rpc.on('ready', () => {
 			console.log(chalk.green.bold('Successfully connected to Discord!'));
@@ -50,10 +59,9 @@ const spawnRPC = async () => {
 			updateStatus();
 		}, 15000);
 	} catch (err) {
-		rpc.clearActivity();
 		console.log(chalk.red.bold('Failed to connect to Discord. Retrying in 15 seconds.'));
 		// Retry every 15 seconds until successful.
-		setInterval(() => {
+		setTimeout(() => {
 			spawnRPC();
 		}, 15000);
 		return;
@@ -65,6 +73,7 @@ spawnRPC();
 
 // Get Trakt user
 async function updateStatus() {
+	// TODO Check if RPC is still connected
 	const user = await trakt.users.settings();
 	const watching = await trakt.users.watching({ username: user.user.username });
 
