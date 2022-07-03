@@ -1,10 +1,11 @@
 <a href="https://discord.gg/Q3ZhdRJ"><img src="https://img.shields.io/discord/495602800802398212?label=Discord&style=for-the-badge"/></a>
-<a href="https://choosealicense.com/licenses/mit"><img src="https://img.shields.io/github/license/RagnarLothbrok-Odin/trakt-discord-presence.svg?style=for-the-badge"/></a>
+[![Codacy Badge](https://img.shields.io/codacy/grade/eb4d99a79b5c4151a7431b1cb1057e1b?style=for-the-badge)](https://www.codacy.com/gh/RagnarLothbrok-Odin/trakt-discord-presence/dashboard?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=RagnarLothbrok-Odin/trakt-discord-presence&amp;utm_campaign=Badge_Grade)
 ![Repo Size](https://img.shields.io/github/languages/code-size/RagnarLothbrok-Odin/trakt-discord-presence.svg?style=for-the-badge)
 ![TOP_LANGUAGE](https://img.shields.io/github/languages/top/RagnarLothbrok-Odin/trakt-discord-presence.svg?style=for-the-badge)
-![FORKS](https://img.shields.io/github/forks/RagnarLothbrok-Odin/trakt-discord-presence.svg?style=for-the-badge&social)
 ![Stars](https://img.shields.io/github/stars/RagnarLothbrok-Odin/trakt-discord-presence.svg?style=for-the-badge)
-    
+![FORKS](https://img.shields.io/github/forks/RagnarLothbrok-Odin/trakt-discord-presence.svg?style=for-the-badge&social)
+<a href="https://choosealicense.com/licenses/mit"><img src="https://img.shields.io/github/license/RagnarLothbrok-Odin/trakt-discord-presence.svg?style=for-the-badge"/></a>
+
 # Trakt Discord Presence
 Set your Discord presence according to what you are watching on [Trakt](https://trakt.tv/)
 
