@@ -35,7 +35,7 @@ trakt.import_token(oAuth);
 
 // Set rpc as null
 let rpc;
-// We define the interval so we can clear it, incase  connection is lost
+// We define the interval so we can clear it, incase the connection is lost
 let statusInt;
 
 const spawnRPC = async () => {
