@@ -35,6 +35,8 @@ trakt.import_token(oAuth);
 
 // Set rpc as null
 let rpc;
+// We define the interval so we can clear it, incase  connection is lost
+let statusInt;
 
 const spawnRPC = async () => {
 	try {
@@ -55,7 +57,7 @@ const spawnRPC = async () => {
 		updateStatus();
 
 		// Update status every 15 seconds
-		setInterval(() => {
+		statusInt = setInterval(() => {
 			updateStatus();
 		}, 15000);
 	} catch (err) {
@@ -73,33 +75,48 @@ spawnRPC();
 
 // Get Trakt user
 async function updateStatus() {
-	// TODO Check if RPC is still connected
-	const user = await trakt.users.settings();
-	const watching = await trakt.users.watching({ username: user.user.username });
-
-	if (watching) {
-		const type = {};
-
-		type.smallImageKey = 'play';
-		type.largeImageKey = 'trakt';
-		type.startTimestamp = new Date(watching.started_at);
-
-		// Set the activity
-		if (watching.type === 'movie') {
-			const { movie } = watching;
-			type.details = `${movie.title} (${movie.year})`;
-		} else if (watching.type === 'episode') {
-			const { show, episode } = watching;
-			type.details = `${show.title}`;
-			type.state = `S${episode.season}E${episode.number} (${episode.title})`;
+	// If the RPC connection is valid
+	if (rpc) {
+		// Check if RPC is still connected
+		if (rpc.transport.socket.readyState !== 'open') {
+			// Reset the updateStatus() interval due to connection loss
+			clearInterval(statusInt);
+			// Destroy the existing client
+			rpc.destroy();
+			// Set the RPC as null
+			rpc = null;
+			// Attempt to reconnect
+			spawnRPC();
+			return;
 		}
-		rpc.setActivity({ ...type });
 
-		console.log(`${formatDate()} | ${chalk.red.bold.underline('Trakt Playing:')} ${type.details}${type.state ? ` - ${type.state}` : ''}`);
-	} else {
-		// Check if the user is currently watching something and if not, run on a timeout.
-		console.log(`${formatDate()} | ${chalk.red.bold.underline('Trakt:')} Not Playing.`);
-		rpc.clearActivity();
+		const user = await trakt.users.settings();
+		const watching = await trakt.users.watching({ username: user.user.username });
+
+		if (watching) {
+			const type = {};
+
+			type.smallImageKey = 'play';
+			type.largeImageKey = 'trakt';
+			type.startTimestamp = new Date(watching.started_at);
+
+			// Set the activity
+			if (watching.type === 'movie') {
+				const { movie } = watching;
+				type.details = `${movie.title} (${movie.year})`;
+			} else if (watching.type === 'episode') {
+				const { show, episode } = watching;
+				type.details = `${show.title}`;
+				type.state = `S${episode.season}E${episode.number} (${episode.title})`;
+			}
+			rpc.setActivity({ ...type });
+
+			console.log(`${formatDate()} | ${chalk.red.bold.underline('Trakt Playing:')} ${type.details}${type.state ? ` - ${type.state}` : ''}`);
+		} else {
+			// Check if the user is currently watching something and if not, run on a timeout.
+			console.log(`${formatDate()} | ${chalk.red.bold.underline('Trakt:')} Not Playing.`);
+			rpc.clearActivity();
+		}
 	}
 }
 
