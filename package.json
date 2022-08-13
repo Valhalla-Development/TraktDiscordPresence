@@ -1,8 +1,12 @@
 {
   "name": "trakt-discord-presence",
-  "version": "1.0.2",
+  "version": "1.0.7",
   "engines": {
     "node": ">=12.0.0"
+  },
+  "scripts": {
+    "install": "yarn install",
+    "start": "node Trakt.js"
   },
   "main": "Trakt.js",
   "repository": "https://github.com/RagnarLothbrok-Odin/trakt-discord-presence.git",
