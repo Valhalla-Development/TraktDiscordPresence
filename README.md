@@ -51,12 +51,12 @@ Due to Discord limitations, your Discord client **MUST** be running on the same 
     * Set the app icon by clicking the box under where it says `APP ICON` _(Set this image to the file named_ `trakt.png` _(you can find this file in the folder named_ `images` _in the extracted source)_
     * Click `Rich Presence` on the left hand pane
     * Set the cover image by clicking the box under where it say `Select Image` _(Set this image to the file named_ `trakt.png` _(you can find this file in the folder named_ `images` _in the extracted source)_
-    * Click `Add Image(s)` and upload the `3` images you can find in the folder named `images` in the extracted source
+    * Click `Add Image(s)` and upload the images you can find in the folder named `images` in the extracted source
 
 ## Usage
 1. Run the program by running the following command:
 
-       node .
+       yarn start
 
 2. You will be asked for your [Trakt Client ID](https://trakt.tv/oauth/applications), if you did not create an application, ensure you read the [Setup section of this page](https://github.com/RagnarLothbrok-Odin/trakt-discord-presence/blob/main/README.md#setup)
 
@@ -69,7 +69,7 @@ Due to Discord limitations, your Discord client **MUST** be running on the same 
     
 6. Finally, you must now run the following code to start the program.
 
-          node .
+          yarn start
 
 ## Functionality
 If you follow all the steps correctly, you should see an output similar to the following
