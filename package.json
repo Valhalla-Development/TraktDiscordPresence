@@ -9,16 +9,16 @@
     "node": ">=16.0.0"
   },
   "scripts": {
-    "start": "node --no-warnings=ExperimentalWarning --loader ts-node/esm index.ts"
+    "start": "tsc && node build/index.js"
   },
   "type": "module",
   "dependencies": {
     "@types/luxon": "^3.3.7",
     "@xhayper/discord-rpc": "^1.1.1",
-    "better-trakt": "^0.9.1",
-    "chalk": "5.3.0",
+    "colors": "^1.4.0",
     "enquirer": "^2.4.1",
     "luxon": "^3.4.4",
+    "trakt.tv": "^8.2.0",
     "ts-node": "^10.9.2"
   },
   "devDependencies": {
