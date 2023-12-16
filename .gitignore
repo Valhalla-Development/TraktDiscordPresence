@@ -6,6 +6,13 @@
 .DS_Store
 
 # ========================
+# Build output
+# ========================
+
+# Build directory
+build/
+
+# ========================
 # IDEs and editors
 # ========================
 
@@ -26,3 +33,4 @@ yarn-error.log
 # Config file
 # ========================
 config.json
+
