@@ -14,14 +14,15 @@
   "type": "module",
   "dependencies": {
     "@types/luxon": "^3.3.7",
-    "@xhayper/discord-rpc": "^1.1.1",
     "colors": "^1.4.0",
+    "discord-rpc": "^4.0.1",
     "enquirer": "^2.4.1",
     "luxon": "^3.4.4",
     "trakt.tv": "^8.2.0",
     "ts-node": "^10.9.2"
   },
   "devDependencies": {
+    "@types/discord-rpc": "^4",
     "@types/node": "^20.10.4",
     "@typescript-eslint/eslint-plugin": "^6.14.0",
     "@typescript-eslint/parser": "^6.14.0",
