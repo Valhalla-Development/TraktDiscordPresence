@@ -406,6 +406,7 @@ function formatDate(): string {
 /**
  * Generates a configuration object for creating a prompt in enquirer's prompt interface.
  *
+ * @param type - The type of prompt
  * @param name - The name of the input field (also used as a key in the final object response i.e. `clientId`, `clientSecret`, `discordClientId`, `oAuth`).
  * @param message - The message to show in the prompt.
  *
@@ -422,9 +423,9 @@ function formatDate(): string {
  *
  * It will create a single input prompt with name as 'clientId' and message as 'Please provide your Trakt Client ID:'.
  */
-function generatePromptConfig(name: string, message: string) {
+function generatePromptConfig(type: string, name: string, message: string) {
     return {
-        type: 'input',
+        type,
         name,
         message,
     };
@@ -464,9 +465,9 @@ async function generateTraktCredentials(): Promise<TraktCredentials | null> {
     );
 
     return prompt([
-        generatePromptConfig('clientId', 'Please provide your Trakt Client ID:'),
-        generatePromptConfig('clientSecret', 'Please provide your Trakt Client Secret:'),
-        generatePromptConfig('discordClientId', 'Please provide your Discord Client ID:'),
+        generatePromptConfig('input', 'clientId', 'Please provide your Trakt Client ID:'),
+        generatePromptConfig('input', 'clientSecret', 'Please provide your Trakt Client Secret:'),
+        generatePromptConfig('input', 'discordClientId', 'Please provide your Discord Client ID:'),
     ]);
 }
 
@@ -503,7 +504,7 @@ async function authoriseTrakt(gen: TraktCredentials) {
 
     // Prompt the user to visit the Trakt authorization URL and enter the received code
     const auth = await prompt<TraktCredentials>([
-        generatePromptConfig('oAuth', `Please visit the following link and subsequently, paste the received code into the console:\n${traktAuthUrl}\n`),
+        generatePromptConfig('input', 'oAuth', `Please visit the following link and subsequently, paste the received code into the console:\n${traktAuthUrl}\n`),
     ]);
 
     // Prepare a TraktCredentials object with essential information
