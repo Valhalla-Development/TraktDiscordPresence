@@ -238,6 +238,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@types/cli-progress@npm:^3":
+  version: 3.11.5
+  resolution: "@types/cli-progress@npm:3.11.5"
+  dependencies:
+    "@types/node": "npm:*"
+  checksum: bf00f543ee677f61b12e390876df59354943d6c13d96640171528e9b7827f4edb7701cdd4675d6256d13ef9ee542731bd5cae585e1b43502553f69fc210dcb92
+  languageName: node
+  linkType: hard
+
 "@types/discord-rpc@npm:^4":
   version: 4.0.8
   resolution: "@types/discord-rpc@npm:4.0.8"
@@ -792,6 +801,15 @@ __metadata:
   version: 2.2.0
   resolution: "clean-stack@npm:2.2.0"
   checksum: 1f90262d5f6230a17e27d0c190b09d47ebe7efdd76a03b5a1127863f7b3c9aec4c3e6c8bb3a7bbf81d553d56a1fd35728f5a8ef4c63f867ac8d690109742a8c1
+  languageName: node
+  linkType: hard
+
+"cli-progress@npm:^3.12.0":
+  version: 3.12.0
+  resolution: "cli-progress@npm:3.12.0"
+  dependencies:
+    string-width: "npm:^4.2.3"
+  checksum: f464cb19ebde2f3880620a2adfaeeefaec6cb15c8e610c8a659ca1047ee90d69f3bf2fdabbb1fe33ac408678e882e3e0eecdb84ab5df0edf930b269b8a72682d
   languageName: node
   linkType: hard
 
@@ -2540,6 +2558,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"parse-ms@npm:^3.0.0":
+  version: 3.0.0
+  resolution: "parse-ms@npm:3.0.0"
+  checksum: 056b4a32a9d3749f3f4cfffefb45c45540491deaa8e1d8ad43c2ddde7ba04edd076bd1b298f521238bb5fb084a9b2c4a2ebb78aefa651afbc4c2b0af4232fc54
+  languageName: node
+  linkType: hard
+
 "path-exists@npm:^4.0.0":
   version: 4.0.0
   resolution: "path-exists@npm:4.0.0"
@@ -2596,6 +2621,15 @@ __metadata:
   version: 1.2.1
   resolution: "prelude-ls@npm:1.2.1"
   checksum: b00d617431e7886c520a6f498a2e14c75ec58f6d93ba48c3b639cf241b54232d90daa05d83a9e9b9fef6baa63cb7e1e4602c2372fea5bc169668401eb127d0cd
+  languageName: node
+  linkType: hard
+
+"pretty-ms@npm:^8.0.0":
+  version: 8.0.0
+  resolution: "pretty-ms@npm:8.0.0"
+  dependencies:
+    parse-ms: "npm:^3.0.0"
+  checksum: e960d633ecca45445cf5c6dffc0f5e4bef6744c92449ab0e8c6c704800675ab71e181c5e02ece5265e02137a33e313d3f3e355fbf8ea30b4b5b23de423329f8d
   languageName: node
   linkType: hard
 
@@ -3077,11 +3111,13 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "trakt-discord-presence@workspace:."
   dependencies:
+    "@types/cli-progress": "npm:^3"
     "@types/discord-rpc": "npm:^4"
     "@types/luxon": "npm:^3.3.7"
     "@types/node": "npm:^20.10.4"
     "@typescript-eslint/eslint-plugin": "npm:^6.14.0"
     "@typescript-eslint/parser": "npm:^6.14.0"
+    cli-progress: "npm:^3.12.0"
     colors: "npm:^1.4.0"
     discord-rpc: "npm:^4.0.1"
     enquirer: "npm:^2.4.1"
@@ -3090,6 +3126,7 @@ __metadata:
     eslint-formatter-table: "npm:^7.32.1"
     eslint-plugin-import: "npm:^2.29.1"
     luxon: "npm:^3.4.4"
+    pretty-ms: "npm:^8.0.0"
     trakt.tv: "npm:^8.2.0"
     ts-node: "npm:^10.9.2"
     typescript: "npm:^5.3.3"
