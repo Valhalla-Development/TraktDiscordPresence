@@ -1,10 +1,14 @@
 import { existsSync, readFileSync, writeFileSync } from 'fs';
 import 'colors';
 import Enquirer from 'enquirer';
-// @ts-expect-error [currently, no types are present in trakt.tv, so this will cause an error]
+// @ts-expect-error [currently, no types file exists for trakt.tv, so this will cause an error]
 import Trakt from 'trakt.tv';
 import { Client } from 'discord-rpc';
 import { DateTime } from 'luxon';
+import {
+    GenericFormatter, Options, Params, SingleBar,
+} from 'cli-progress';
+import prettyMilliseconds from 'pretty-ms';
 
 const { prompt } = Enquirer;
 
@@ -23,20 +27,46 @@ interface TraktContent {
     state?: string
 }
 
+interface Movie {
+    expires_at: string;
+    started_at: string;
+    movie: {
+        title: string;
+        year: number;
+    }
+
+}
+
+interface TvShow {
+    expires_at: string;
+    started_at: string;
+    show: {
+        title: string;
+    }
+    episode: {
+        season: number;
+        number: number;
+        title: string;
+    }
+}
+
 /**
  * This variable can be either an instance of the `Client` from 'discord-rpc' or null.
  * It is used to control the Discord Rich Presence client.
  *
- * @example
- * ```typescript
- * import { Client } from 'discord-rpc';
- * let rpc: Client | null;
- * ```
- * @see {@link DiscordRPC#spawnRPC} for the method where this variable is mainly used.
- *
  * @type Client | null
  */
 let rpc: Client | null;
+
+/**
+ * `progressBar` is a SingleBar instance from the `cli-progress` module that represents a progress bar instance.
+ * It is initially null but will be assigned later when a movie starts playing.
+ *
+ * The SingleBar instance is used to visualize the progress of the movie's play time on the terminal.
+ *
+ * @see {@link https://www.npmjs.com/package/cli-progress} for more information about how the cli-progress module works.
+ */
+let progressBar: SingleBar | null;
 
 /**
  * This class is responsible for managing the Discord Rich Presence Client and its connection.
@@ -44,7 +74,7 @@ let rpc: Client | null;
  * @class
  */
 class DiscordRPC {
-    public statusInt: NodeJS.Timeout | undefined;
+    public statusInt: NodeJS.Timeout | null = null;
 
     /**
      * Spawns and manages a Discord Rich Presence client.
@@ -57,20 +87,31 @@ class DiscordRPC {
     async spawnRPC(trakt: TraktInstance) {
         try {
             const traktCredentials = await fetchTraktCredentials();
+
+            // Initialize the RPC client with IPC transport
             rpc = new Client({ transport: 'ipc' });
+
+            // Event handler for when the RPC client is ready
             rpc.on('ready', () => {
                 console.log('Successfully connected to Discord!'.green);
             });
+
+            // Login to Discord using Trakt's Discord client ID
             await rpc.login({ clientId: traktCredentials.discordClientId });
+
+            // Update the status initially
             await trakt.updateStatus(this.statusInt);
+
+            // Set up interval for updating status
             this.statusInt = setInterval(async () => {
                 await trakt.updateStatus(this.statusInt);
-            }, 15000);
-        } catch {
-            console.log('Failed to connect to Discord. Retrying in 15 seconds.'.red);
+            }, 15 * 1000);
+        } catch (err) {
+            // Handle errors and retry after 15 seconds
+            console.log('Failed to connect to Discord. Retrying in 15 seconds.'.red, `(${err})`.italic);
             setTimeout(() => {
                 this.spawnRPC(trakt);
-            }, 15000);
+            }, 15 * 1000);
         }
     }
 }
@@ -90,60 +131,220 @@ class TraktInstance {
      * @returns Returns a promise that resolves with an instance of the Trakt API.
      */
     async createTrakt(): Promise<Trakt> {
+        // Fetch Trakt credentials
         const traktCredentials = await fetchTraktCredentials();
+
+        // Create a new Trakt instance
         this.trakt = new Trakt({
             client_id: traktCredentials.clientId,
             client_secret: traktCredentials.clientSecret,
         });
+
+        // Import Trakt OAuth token
         this.trakt.import_token(traktCredentials.oAuth);
+
+        // Return the Trakt instance
         return this.trakt;
     }
 
     /**
-     * Checks the user's Trakt status and sends it to Discord.
+     * Connects with the Discord RPC and updates the status.
      *
      * @async
-     * @param statusInt - An interval ID used with the Node.js global setInterval() function, or undefined.
-     * @throws When the RPC connection isn't open or if it fails to fetch Trakt user or watching data.
+     * @param discordStatusInterval - Timeout interval for updating the Discord status.
      */
-    async updateStatus(statusInt: NodeJS.Timeout | undefined) {
-        if (rpc) {
-            // @ts-expect-error [currently, no types are present in trakt.tv, so this will cause an error]
-            if (rpc.transport.socket.readyState !== 'open') {
-                if (statusInt) clearInterval(statusInt);
-                await rpc.destroy();
-                rpc = null;
-                await new DiscordRPC().spawnRPC(this);
-                return;
-            }
+    async updateStatus(discordStatusInterval: NodeJS.Timeout | null) {
+        if (!rpc) return;
 
-            const user = await this.trakt.users.settings();
-            const watching = await this.trakt.users.watching({ username: user.user.username });
+        // Check if the RPC transport socket is not open
+        // @ts-expect-error [currently, no types file exists for trakt.tv, so this will cause an error]
+        if (rpc.transport.socket.readyState !== 'open') {
+            // Clear the Discord status interval
+            if (discordStatusInterval) clearInterval(discordStatusInterval);
 
-            if (watching) {
-                const type: TraktContent = {
-                    smallImageKey: 'play',
-                    largeImageKey: 'trakt',
-                    startTimestamp: new Date(watching.started_at),
-                };
+            // Destroy the RPC client
+            await rpc.destroy();
+            rpc = null;
 
-                if (watching.type === 'movie') {
-                    const { movie } = watching;
-                    type.details = `${movie.title} (${movie.year})`;
-                } else if (watching.type === 'episode') {
-                    const { show, episode } = watching;
-                    type.details = `${show.title}`;
-                    type.state = `S${episode.season}E${episode.number} (${episode.title})`;
-                }
-                await rpc.setActivity({ ...type });
+            // Stop the progress bar if it exists
+            if (progressBar) progressBar.stop();
 
-                console.log(`${formatDate()} | ${'Trakt Playing:'.red} ${type.details}${type.state ? ` - ${type.state}` : ''}`.bold);
-            } else {
-                console.log(`${formatDate()} | ${'Trakt:'.red} Not Playing.`.bold);
-                await rpc.clearActivity();
-            }
+            // Respawn the RPC client
+            await new DiscordRPC().spawnRPC(this);
+            return;
         }
+
+        // Fetch user settings and currently watching content from Trakt
+        const user = await this.trakt.users.settings();
+        const watching = await this.trakt.users.watching({ username: user.user.username });
+
+        if (watching) {
+            // Prepare Trakt content for Discord RPC
+            let traktContent: TraktContent = {
+                smallImageKey: 'play',
+                largeImageKey: 'trakt',
+                startTimestamp: new Date(watching.started_at),
+            };
+
+            // Handle different content types (movie or episode)
+            if (watching.type === 'movie') {
+                traktContent = await this.handleMovie(watching, traktContent);
+            } else if (watching.type === 'episode') {
+                traktContent = await this.handleEpisode(watching, traktContent);
+            }
+
+            // Set Discord activity with Trakt content
+            await rpc.setActivity({ ...traktContent });
+            return;
+        }
+
+        // Stop the progress bar if not watching anything, and it exists
+        if (progressBar) progressBar.stop();
+
+        // Log that Trakt is not playing anything
+        console.log(`${formatDate()} | ${'Trakt:'.red} Not Playing.`.bold);
+
+        // Clear Discord activity
+        await rpc.clearActivity();
     }
+
+    /**
+     * Processes a movie object received from Trakt and prepares it for Discord.
+     *
+     * @private
+     * @async
+     * @param watching - The movie object from Trakt.
+     * @param traktContent - The content to send to Discord.
+     * @returns The modified content to send to Discord.
+     */
+    private async handleMovie(watching: Movie, traktContent: TraktContent): Promise<TraktContent> {
+        const { movie } = watching;
+        const detail = `${movie.title} (${movie.year})`;
+
+        // Calculate total and elapsed durations in seconds
+        const totalDuration = DateTime.fromISO(watching.expires_at).diff(DateTime.fromISO(watching.started_at), 'seconds').seconds;
+        const elapsedDuration = DateTime.local().diff(DateTime.fromISO(watching.started_at), 'seconds').seconds;
+
+        // Initialize progress bar if it doesn't exist
+        if (!progressBar) {
+            progressBar = await generateProgressBar();
+            progressBar.start(totalDuration, elapsedDuration, {
+                content: detail,
+                startedAt: watching.started_at,
+                endsAt: watching.expires_at,
+            });
+        }
+
+        // Update Trakt content details
+        return { ...traktContent, details: detail };
+    }
+
+    /**
+     * Processes a TV show object received from Trakt and prepares it for Discord.
+     *
+     * @private
+     * @async
+     * @param watching - The TV show object from Trakt.
+     * @param traktContent - The content to send to Discord.
+     * @returns The modified content to send to Discord.
+     */
+    private async handleEpisode(watching: TvShow, traktContent: TraktContent): Promise<TraktContent> {
+        const { show, episode } = watching;
+        const detail = `${show.title}`;
+        const state = `S${episode.season}E${episode.number} (${episode.title})`;
+
+        // Calculate total and elapsed durations in seconds
+        const totalDuration = DateTime.fromISO(watching.expires_at).diff(DateTime.fromISO(watching.started_at), 'seconds').seconds;
+        const elapsedDuration = DateTime.local().diff(DateTime.fromISO(watching.started_at), 'seconds').seconds;
+
+        // Initialize progress bar if it doesn't exist
+        if (!progressBar) {
+            progressBar = await generateProgressBar();
+            progressBar.start(totalDuration, elapsedDuration, {
+                content: `${detail} - ${state}`,
+                startedAt: watching.started_at,
+                endsAt: watching.expires_at,
+            });
+        }
+
+        // Update Trakt content details and state
+        return { ...traktContent, details: detail, state };
+    }
+}
+
+/**
+ * Formats a date and time string into a localized time string using the current time zone.
+ *
+ * @param date - A string representing a date and time.
+ * @returns A string representing the formatted time in the local time zone.
+ */
+function formatDateTime(date: string): string {
+    return DateTime.fromISO(date).setZone('local').toLocaleString(DateTime.TIME_SIMPLE);
+}
+
+/**
+ * Calculates the elapsed duration in seconds between the current time and the specified starting time.
+ *
+ * @param startedAt - A string representing the starting date and time.
+ * @returns The elapsed duration in seconds.
+ */
+function calculateElapsedDuration(startedAt: string): number {
+    return DateTime.local().diff(DateTime.fromISO(startedAt), 'seconds').seconds;
+}
+
+/**
+ * Generates a string representing a progress bar based on the specified options and parameters.
+ *
+ * @param options - An object containing optional settings for the progress bar.
+ * @param params - An object containing parameters for generating the progress bar.
+ * @returns A string representing the generated progress bar.
+ */
+function generateBarProgress(options: Options, params: Params): string {
+    // Calculate the number of complete and incomplete characters based on the progress and bar size.
+    const complete = (options.barCompleteString || '').slice(0, Math.round(params.progress * (options.barsize ?? 0)));
+    const incomplete = (options.barIncompleteString || '').slice(0, Math.round((1 - params.progress) * (options.barsize ?? 0)));
+
+    // Combine complete and incomplete parts to form the progress bar string.
+    return complete + incomplete;
+}
+
+/**
+ * Asynchronously generates a progress bar using the provided options and parameters.
+ *
+ * @returns A `SingleBar` instance representing the generated progress bar.
+ */
+async function generateProgressBar() {
+    // Define a custom format function for the progress bar
+    const formatFunction: GenericFormatter = (options, params, payload) => {
+        // Extract relevant information from the payload
+        const { startedAt, endsAt, content } = payload;
+
+        // Format start and end dates in local time
+        const localStartDate = formatDateTime(startedAt);
+        const localEndDate = formatDateTime(endsAt);
+
+        // Calculate elapsed duration and format it in a human-readable format
+        const elapsedDuration = calculateElapsedDuration(startedAt);
+        const prettyDuration = prettyMilliseconds(elapsedDuration * 1000, { secondsDecimalDigits: 0 });
+
+        // Generate progress bar
+        const barProgress = generateBarProgress(options, params);
+
+        // Construct the progress bar line with formatted information
+        return `${content.cyan.padStart(3)} ${barProgress} Started at ${localStartDate.green.bold} | Ends at ${localEndDate.green.bold} | Time Elapsed: ${prettyDuration.green.bold}`;
+    };
+
+    // todo pretty duration started at negative numbers for me idk why
+
+    // Create a new SingleBar instance with specified options
+    return new SingleBar({
+        format: formatFunction,
+        barCompleteChar: '█',
+        barIncompleteChar: '░',
+        hideCursor: true,
+        clearOnComplete: true,
+        linewrap: true,
+    });
 }
 
 /**
@@ -166,8 +367,17 @@ class TraktInstance {
  * In case of an error during reading the file, it will throw an error.
  */
 async function fetchTraktCredentials(): Promise<TraktCredentials> {
-    const configData = readFileSync('./config.json', 'utf8');
-    return JSON.parse(configData);
+    try {
+        // Read the configuration file synchronously
+        const configData = readFileSync('./config.json', 'utf8');
+
+        // Return the parsed credentials
+        return JSON.parse(configData);
+    } catch (error) {
+        // Handle errors during file reading or JSON parsing
+        console.error('Error fetching Trakt credentials:', error);
+        process.exit(1);
+    }
 }
 
 /**
@@ -266,7 +476,7 @@ async function generateTraktCredentials(): Promise<TraktCredentials | null> {
  * The obtained token is then saved into a file named `config.json`.
  * In case the provided token is incorrect, the function logs the error message and terminates the process.
  *
- * @param gen - An object of type `TraktCredentials` that contains
+ * @param gen - An object of a type `TraktCredentials` that contains
  * `clientId`, `clientSecret`, and `discordClientId`.
  *
  * @throws When the received token is incorrect or if unable
@@ -281,34 +491,45 @@ async function generateTraktCredentials(): Promise<TraktCredentials | null> {
  * @async
  */
 async function authoriseTrakt(gen: TraktCredentials) {
-    const qOptions = {
+    // Create a Trakt instance with client ID and client secret
+    const traktOptions = {
         client_id: gen.clientId,
         client_secret: gen.clientSecret,
     };
+    const traktInstance = new Trakt(traktOptions);
 
-    const qTrakt = new Trakt(qOptions);
+    // Get the Trakt authorization URL
+    const traktAuthUrl = traktInstance.get_url();
 
-    const traktAuthUrl = qTrakt.get_url();
-
+    // Prompt the user to visit the Trakt authorization URL and enter the received code
     const auth = await prompt<TraktCredentials>([
         generatePromptConfig('oAuth', `Please visit the following link and subsequently, paste the received code into the console:\n${traktAuthUrl}\n`),
     ]);
 
-    const arr: TraktCredentials = {
+    // Prepare a TraktCredentials object with essential information
+    const updatedCredentials: TraktCredentials = {
         clientId: gen.clientId,
         clientSecret: gen.clientSecret,
         discordClientId: gen.discordClientId,
     };
 
     try {
-        await qTrakt.exchange_code(auth.oAuth, null);
-        arr.oAuth = await qTrakt.export_token();
-    } catch {
-        console.log('\nAn incorrect token has been provided! Please restart the program and try again.'.red.bold); process.exit(1);
+        // Exchange the authorization code for an access token
+        await traktInstance.exchange_code(auth.oAuth, null);
+
+        // Export the Trakt access token and store it in the credentials object
+        updatedCredentials.oAuth = await traktInstance.export_token();
+    } catch (error) {
+        // Handle errors during the token exchange process
+        console.log('\nAn incorrect token has been provided! Please restart the program and try again.'.red.bold);
+        console.error(error);
+        process.exit(1);
     }
 
-    writeFileSync('./config.json', JSON.stringify(arr, null, 3));
+    // Write the updated credentials to the configuration file
+    writeFileSync('./config.json', JSON.stringify(updatedCredentials, null, 3));
 
+    // Prompt the user to restart the program
     console.log('\nPlease restart this program.'.green.bold);
     process.exit(1);
 }
@@ -340,14 +561,25 @@ async function initializeTraktAndDiscordRPC(): Promise<void> {
  */
 async function main(): Promise<void> {
     try {
+        // Check if the configuration file exists
         if (!existsSync('./config.json')) {
+            // Generate Trakt credentials if the file doesn't exist
             const generatedCredentials = await generateTraktCredentials();
-            if (generatedCredentials) await authoriseTrakt(generatedCredentials);
+
+            // If credentials were generated, authorize Trakt
+            if (generatedCredentials) {
+                await authoriseTrakt(generatedCredentials);
+            }
         }
+
+        // Initialize Trakt and Discord RPC
         await initializeTraktAndDiscordRPC();
     } catch (error) {
+        // Handle and log errors
         console.error(`\nAn error occurred: ${error}`.red);
         process.exit(1);
     }
 }
+
+// Call the main function
 await main();
