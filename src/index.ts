@@ -94,7 +94,7 @@ class DiscordRPC {
 
             // Event handler for when the RPC client is ready
             rpc.on('ready', () => {
-                console.log('Successfully connected to Discord!'.green);
+                console.log('Successfully connected to Discord!\n'.green);
             });
 
             // Login to Discord using Trakt's Discord client ID
