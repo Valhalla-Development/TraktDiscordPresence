@@ -12,11 +12,12 @@ import prettyMilliseconds from 'pretty-ms';
 
 const { prompt } = Enquirer;
 
-interface TraktCredentials {
+interface Configuration {
     clientId: string;
     clientSecret: string;
     discordClientId: string;
     oAuth?: string;
+    mode: string;
 }
 
 interface TraktContent {
@@ -24,7 +25,7 @@ interface TraktContent {
     largeImageKey: string;
     startTimestamp: Date;
     details?: string;
-    state?: string
+    state?: string;
 }
 
 interface Movie {
@@ -124,6 +125,8 @@ class DiscordRPC {
 class TraktInstance {
     trakt: Trakt;
 
+    private credentials: Configuration | null = null;
+
     /**
      * Initializes the Trakt API object.
      *
@@ -133,6 +136,9 @@ class TraktInstance {
     async createTrakt(): Promise<Trakt> {
         // Fetch Trakt credentials
         const traktCredentials = await fetchTraktCredentials();
+
+        // Store the credentials for use in other TraktInstance functions
+        this.credentials = traktCredentials;
 
         // Create a new Trakt instance
         this.trakt = new Trakt({
@@ -226,13 +232,18 @@ class TraktInstance {
         const elapsedDuration = DateTime.local().diff(DateTime.fromISO(watching.started_at), 'seconds').seconds;
 
         // Initialize progress bar if it doesn't exist
-        if (!progressBar) {
+        if (!progressBar && this.credentials?.mode === 'progress_bar') {
             progressBar = await generateProgressBar();
             progressBar.start(totalDuration, elapsedDuration, {
                 content: detail,
                 startedAt: watching.started_at,
                 endsAt: watching.expires_at,
             });
+        }
+
+        // If the mode is set to standard cli logging
+        if (this.credentials?.mode === 'log') {
+            console.log(`${formatDate()} | ${'Trakt Playing:'.red.bold} ${detail} (${movie.year})`);
         }
 
         // Update Trakt content details
@@ -258,13 +269,18 @@ class TraktInstance {
         const elapsedDuration = DateTime.local().diff(DateTime.fromISO(watching.started_at), 'seconds').seconds;
 
         // Initialize progress bar if it doesn't exist
-        if (!progressBar) {
+        if (!progressBar && this.credentials?.mode === 'progress_bar') {
             progressBar = await generateProgressBar();
             progressBar.start(totalDuration, elapsedDuration, {
                 content: `${detail} - ${state}`,
                 startedAt: watching.started_at,
                 endsAt: watching.expires_at,
             });
+        }
+
+        // If the mode is set to standard cli logging
+        if (this.credentials?.mode === 'log') {
+            console.log(`${formatDate()} | ${'Trakt Playing:'.red.bold} ${detail} - ${state}`);
         }
 
         // Update Trakt content details and state
@@ -334,8 +350,6 @@ async function generateProgressBar() {
         return `${content.cyan.padStart(3)} ${barProgress} Started at ${localStartDate.green.bold} | Ends at ${localEndDate.green.bold} | Time Elapsed: ${prettyDuration.green.bold}`;
     };
 
-    // todo pretty duration started at negative numbers for me idk why
-
     // Create a new SingleBar instance with specified options
     return new SingleBar({
         format: formatFunction,
@@ -366,7 +380,7 @@ async function generateProgressBar() {
  * The function reads a JSON file using `readFileSync` from the `fs` module and parses it to a JavaScript object.
  * In case of an error during reading the file, it will throw an error.
  */
-async function fetchTraktCredentials(): Promise<TraktCredentials> {
+async function fetchTraktCredentials(): Promise<Configuration> {
     try {
         // Read the configuration file synchronously
         const configData = readFileSync('./config.json', 'utf8');
@@ -457,17 +471,29 @@ function generatePromptConfig(type: string, name: string, message: string) {
  *
  * @async
  */
-async function generateTraktCredentials(): Promise<TraktCredentials | null> {
+async function generateTraktCredentials(): Promise<Configuration | null> {
     console.log(
         `Kindly adhere to the instructions displayed on the screen to authenticate your account.\n${
             '**CRUCIAL: Handle your login credentials with the highest level of privacy and avoid disclosing them. They will be stored in a `config.json` file.\n'.red.italic
         }`,
     );
 
+    const modePrompt = [{
+        type: 'select',
+        name: 'mode',
+        message: 'Please select which UI you would prefer.',
+        initial: 0,
+        choices: [
+            { name: 'Progress Bar', message: 'Progress Bar', value: '#ff0000' },
+            { name: 'Standard Log', message: 'Standard Log', value: '#00ff00' },
+        ],
+    }];
+
     return prompt([
         generatePromptConfig('input', 'clientId', 'Please provide your Trakt Client ID:'),
         generatePromptConfig('input', 'clientSecret', 'Please provide your Trakt Client Secret:'),
         generatePromptConfig('input', 'discordClientId', 'Please provide your Discord Client ID:'),
+        ...modePrompt,
     ]);
 }
 
@@ -491,7 +517,7 @@ async function generateTraktCredentials(): Promise<TraktCredentials | null> {
  *
  * @async
  */
-async function authoriseTrakt(gen: TraktCredentials) {
+async function authoriseTrakt(gen: Configuration) {
     // Create a Trakt instance with client ID and client secret
     const traktOptions = {
         client_id: gen.clientId,
@@ -503,15 +529,16 @@ async function authoriseTrakt(gen: TraktCredentials) {
     const traktAuthUrl = traktInstance.get_url();
 
     // Prompt the user to visit the Trakt authorization URL and enter the received code
-    const auth = await prompt<TraktCredentials>([
+    const auth = await prompt<Configuration>([
         generatePromptConfig('input', 'oAuth', `Please visit the following link and subsequently, paste the received code into the console:\n${traktAuthUrl}\n`),
     ]);
 
     // Prepare a TraktCredentials object with essential information
-    const updatedCredentials: TraktCredentials = {
+    const updatedCredentials: Configuration = {
         clientId: gen.clientId,
         clientSecret: gen.clientSecret,
         discordClientId: gen.discordClientId,
+        mode: gen.mode === 'Progress Bar' ? 'progress_bar' : 'log',
     };
 
     try {
@@ -523,7 +550,6 @@ async function authoriseTrakt(gen: TraktCredentials) {
     } catch (error) {
         // Handle errors during the token exchange process
         console.log('\nAn incorrect token has been provided! Please restart the program and try again.'.red.bold);
-        console.error(error);
         process.exit(1);
     }
 
