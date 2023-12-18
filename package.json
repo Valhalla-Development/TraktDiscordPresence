@@ -1,8 +1,8 @@
 {
-  "name": "trakt-discord-presence",
+  "name": "traktdiscordpresence",
   "description": "Set your Discord presence according to what you are watching on Trakt.tv",
   "version": "2.0.0",
-  "repository": "https://github.com/RagnarLothbrok-Odin/trakt-discord-presence.git",
+  "repository": "https://github.com/RagnarLothbrok-Odin/TraktDiscordPresence.git",
   "author": "Ragnar Lothbrok <ragnarlothbrokjr@proton.me>",
   "license": "MIT",
   "engines": {
@@ -24,9 +24,9 @@
     "ts-node": "^10.9.2"
   },
   "devDependencies": {
-    "@types/cli-progress": "^3",
-    "@types/discord-rpc": "^4",
-    "@types/node": "^20.10.4",
+    "@types/cli-progress": "^3.11.5",
+    "@types/discord-rpc": "^4.0.8",
+    "@types/node": "^20.10.5",
     "@typescript-eslint/eslint-plugin": "^6.14.0",
     "@typescript-eslint/parser": "^6.14.0",
     "eslint": "^8.56.0",
