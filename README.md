@@ -1,8 +1,5 @@
 <div align="center">
   <br />
-  <p>
-    <img src="https://share.valhalladev.org/r/XPk8iq.png" width="550" alt="Trakt Discord Presence" />
-  </p>
   <br />
   <p>
   <a href="https://discord.gg/Q3ZhdRJ">
