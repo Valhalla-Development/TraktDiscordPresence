@@ -8,16 +8,16 @@
   <a href="https://discord.gg/Q3ZhdRJ">
     <img src="https://img.shields.io/discord/495602800802398212.svg?colorB=Blue&logo=discord&label=Support&style=for-the-badge" alt="Support">
   </a>
-  <a href="https://github.com/RagnarLothbrok-Odin/trakt-discord-presence">
-    <img src="https://img.shields.io/github/languages/top/RagnarLothbrok-Odin/trakt-discord-presence.svg?style=for-the-badge" alt="Language">
+  <a href="https://github.com/RagnarLothbrok-Odin/TraktDiscordPresence">
+    <img src="https://img.shields.io/github/languages/top/RagnarLothbrok-Odin/TraktDiscordPresence.svg?style=for-the-badge" alt="Language">
   </a>
-  <a href="https://github.com/RagnarLothbrok-Odin/trakt-discord-presence/issues">
-    <img src="https://img.shields.io/github/issues/RagnarLothbrok-Odin/trakt-discord-presence.svg?style=for-the-badge" alt="Issues">
+  <a href="https://github.com/RagnarLothbrok-Odin/TraktDiscordPresence/issues">
+    <img src="https://img.shields.io/github/issues/RagnarLothbrok-Odin/TraktDiscordPresence.svg?style=for-the-badge" alt="Issues">
   </a>
-  <a href="https://github.com/RagnarLothbrok-Odin/trakt-discord-presence/pulls">
-    <img src="https://img.shields.io/github/issues-pr/RagnarLothbrok-Odin/trakt-discord-presence.svg?style=for-the-badge" alt="Pull Requests">
+  <a href="https://github.com/RagnarLothbrok-Odin/TraktDiscordPresence/pulls">
+    <img src="https://img.shields.io/github/issues-pr/RagnarLothbrok-Odin/TraktDiscordPresence.svg?style=for-the-badge" alt="Pull Requests">
   </a>
-  <a href="https://app.codacy.com/gh/RagnarLothbrok-Odin/trakt-discord-presence/dashboard?utm_source=gh&utm_medium=referral&utm_content=&utm_campaign=Badge_grade">
+  <a href="https://app.codacy.com/gh/RagnarLothbrok-Odin/TraktDiscordPresence/dashboard?utm_source=gh&utm_medium=referral&utm_content=&utm_campaign=Badge_grade">
     <img src="https://img.shields.io/codacy/grade/eb4d99a79b5c4151a7431b1cb1057e1b?style=for-the-badge" alt="Codacy Ranking">
   </a>
   </p>
@@ -36,7 +36,7 @@ limitations on Discord, this script is required to run on the same device as you
 
 ## Installation & Setup
 
-1. [Download](https://github.com/RagnarLothbrok-Odin/trakt-discord-presence/releases), extract, and move the latest
+1. [Download](https://github.com/RagnarLothbrok-Odin/TraktDiscordPresence/releases), extract, and move the latest
    release to your chosen location.
 
 2. [Install Node.js](https://nodejs.org) (preferably the `LTS` version) and ensure `Node` is added to `PATH`.
