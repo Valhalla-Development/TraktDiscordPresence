@@ -125,6 +125,8 @@ class DiscordRPC {
 class TraktInstance {
     trakt: Trakt;
 
+    playing: boolean = false;
+
     private credentials: Configuration | null = null;
 
     /**
@@ -185,6 +187,13 @@ class TraktInstance {
         const watching = await this.trakt.users.watching({ username: user.user.username });
 
         if (watching) {
+            if (!this.playing && progressBar) {
+                progressBar.stop();
+                progressBar = null;
+            }
+
+            this.playing = true;
+
             // Prepare Trakt content for Discord RPC
             let traktContent: TraktContent = {
                 smallImageKey: 'play',
@@ -204,11 +213,16 @@ class TraktInstance {
             return;
         }
 
-        // Stop the progress bar if not watching anything, and it exists
-        if (progressBar) progressBar.stop();
+        this.playing = false;
 
-        // Log that Trakt is not playing anything
-        console.log(`${formatDate()} | ${'Trakt:'.red} Not Playing.`.bold);
+        if (progressBar) {
+            progressBar.stop();
+            progressBar = null;
+        }
+
+        // Initialize progress bar if it doesn't exist
+        progressBar = await generateProgressBar();
+        progressBar.start(0, 0);
 
         // Clear Discord activity
         await rpc.clearActivity();
@@ -338,22 +352,26 @@ function generateBarProgress(options: Options, params: Params): string {
 async function generateProgressBar() {
     // Define a custom format function for the progress bar
     const formatFunction: GenericFormatter = (options, params, payload) => {
-        // Extract relevant information from the payload
-        const { startedAt, endsAt, content } = payload;
+        if (payload && Object.keys(payload).length > 0) {
+            // Extract relevant information from the payload
+            const { startedAt, endsAt, content } = payload;
 
-        // Format start and end dates in local time
-        const localStartDate = formatDateTime(startedAt);
-        const localEndDate = formatDateTime(endsAt);
+            // Format start and end dates in local time
+            const localStartDate = formatDateTime(startedAt);
+            const localEndDate = formatDateTime(endsAt);
 
-        // Calculate elapsed duration and format it in a human-readable format
-        const elapsedDuration = calculateElapsedDuration(startedAt);
-        const prettyDuration = prettyMilliseconds(elapsedDuration * 1000, { secondsDecimalDigits: 0 });
+            // Calculate elapsed duration and format it in a human-readable format
+            const elapsedDuration = calculateElapsedDuration(startedAt);
+            const prettyDuration = prettyMilliseconds(elapsedDuration * 1000, { secondsDecimalDigits: 0 });
 
-        // Generate progress bar
-        const barProgress = generateBarProgress(options, params);
+            // Generate progress bar
+            const barProgress = generateBarProgress(options, params);
 
-        // Construct the progress bar line with formatted information
-        return `${content.cyan.padStart(3)} ${barProgress} Started at ${localStartDate.green.bold} | Ends at ${localEndDate.green.bold} | Time Elapsed: ${prettyDuration.green.bold}`;
+            // Construct the progress bar line with formatted information
+            return `${content.cyan.padStart(3)} ${barProgress} Started at ${localStartDate.green.bold} | Ends at ${localEndDate.green.bold} | Time Elapsed: ${prettyDuration.green.bold}`;
+        }
+
+        return `${formatDate()} | ${'Trakt:'.red} Not Playing.`;
     };
 
     // Create a new SingleBar instance with specified options
