@@ -241,6 +241,11 @@ class TraktInstance {
             });
         }
 
+        // If the progressBar instance exists, update its progress with the elapsed duration
+        if (progressBar) {
+            progressBar.update(elapsedDuration);
+        }
+
         // If the mode is set to standard cli logging
         if (this.credentials?.mode === 'standard_log') {
             console.log(`${formatDate()} | ${'Trakt Playing:'.red.bold} ${detail} (${movie.year})`);
@@ -276,6 +281,11 @@ class TraktInstance {
                 startedAt: watching.started_at,
                 endsAt: watching.expires_at,
             });
+        }
+
+        // If the progressBar instance exists, update its progress with the elapsed duration
+        if (progressBar) {
+            progressBar.update(elapsedDuration);
         }
 
         // If the mode is set to standard cli logging
