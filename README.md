@@ -1,7 +1,7 @@
 <div align="center">
   <br />
   <p>
-    <img src="https://share.valhalladev.org/r/XPk8iq.png" width="550" alt="DiscordGPT" />
+    <img src="https://share.valhalladev.org/r/XPk8iq.png" width="550" alt="Trakt Discord Presence" />
   </p>
   <br />
   <p>
@@ -77,9 +77,9 @@ limitations on Discord, this script is required to run on the same device as you
 If set up correctly, your output should resemble this:
 
 - **Progress Bar**
-  </br><img src="https://share.valhalladev.org/u/progress_bar.png" alt="Progress Bar" style="width: 500px;">
+  </br><img src="https://share.valhalladev.org/u/progress_bar.png" alt="Progress Bar" style="width: 1000px;">
 - **Standard Log**
-  </br><img src="https://share.valhalladev.org/u/standard_log.png" alt="Standard Log" style="width: 500px;">
+  </br><img src="https://share.valhalladev.org/u/standard_log.png" alt="Standard Log" style="width: 700px;">
 
 ## License
 
