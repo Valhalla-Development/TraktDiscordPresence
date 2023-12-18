@@ -368,6 +368,7 @@ async function generateProgressBar() {
         hideCursor: true,
         clearOnComplete: true,
         linewrap: true,
+        fps: 1,
     });
 }
 
