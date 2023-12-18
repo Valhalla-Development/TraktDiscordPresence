@@ -1,26 +1,39 @@
 {
-  "name": "trakt-discord-presence",
-  "version": "1.0.7",
+  "name": "traktdiscordpresence",
+  "description": "Set your Discord presence according to what you are watching on Trakt.tv",
+  "version": "2.0.35",
+  "repository": "https://github.com/RagnarLothbrok-Odin/TraktDiscordPresence.git",
+  "author": "Ragnar Lothbrok <ragnarlothbrokjr@proton.me>",
+  "license": "MIT",
   "engines": {
-    "node": ">=12.0.0"
+    "node": ">=16.0.0"
   },
   "scripts": {
-    "install": "yarn install",
-    "start": "node Trakt.js"
+    "start": "tsc && node build/index.js"
   },
-  "main": "Trakt.js",
-  "repository": "https://github.com/RagnarLothbrok-Odin/trakt-discord-presence.git",
-  "author": "Ragnar Lothbrok <30740511+RagnarLothbrok-Odin@users.noreply.github.com>",
-  "license": "MIT",
+  "type": "module",
   "dependencies": {
-    "chalk": "4.1.2",
+    "@types/luxon": "^3.3.7",
+    "cli-progress": "^3.12.0",
+    "colors": "^1.4.0",
     "discord-rpc": "^4.0.1",
-    "enquirer": "^2.3.6",
-    "luxon": "^2.4.0",
-    "trakt.tv": "^8.1.1"
+    "enquirer": "^2.4.1",
+    "luxon": "^3.4.4",
+    "pretty-ms": "^8.0.0",
+    "trakt.tv": "^8.2.0",
+    "ts-node": "^10.9.2"
   },
   "devDependencies": {
-    "eslint": "^8.5.0",
-    "eslint-config-tesseract": "^0.3.0"
-  }
+    "@types/cli-progress": "^3.11.5",
+    "@types/discord-rpc": "^4.0.8",
+    "@types/node": "^20.10.5",
+    "@typescript-eslint/eslint-plugin": "^6.14.0",
+    "@typescript-eslint/parser": "^6.14.0",
+    "eslint": "^8.56.0",
+    "eslint-config-airbnb": "^19.0.4",
+    "eslint-formatter-table": "^7.32.1",
+    "eslint-plugin-import": "^2.29.1",
+    "typescript": "^5.3.3"
+  },
+  "packageManager": "yarn@4.0.2"
 }

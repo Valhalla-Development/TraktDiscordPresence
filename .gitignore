@@ -1,10 +1,36 @@
-# Irritating file create by Mac
+# ========================
+# System generated files
+# ========================
+
+# macOS generated files
 .DS_Store
 
-# Random stuff
-node_modules/
-yarn.lock
-.eslintrc.json
+# ========================
+# Build output
+# ========================
 
+# Build directory
+build/
+
+# ========================
+# IDEs and editors
+# ========================
+
+# JetBrains IDEs (e.g., WebStorm, IntelliJ)
+.idea/
+
+# ========================
+# Dependency management
+# ========================
+
+# Yarn: lock file and error log
+yarn-error.log
+.yarn/
+.pnp.cjs
+.pnp.loader.mjs
+
+# ========================
 # Config file
+# ========================
 config.json
+
