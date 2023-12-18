@@ -242,7 +242,7 @@ class TraktInstance {
         }
 
         // If the mode is set to standard cli logging
-        if (this.credentials?.mode === 'log') {
+        if (this.credentials?.mode === 'standard_log') {
             console.log(`${formatDate()} | ${'Trakt Playing:'.red.bold} ${detail} (${movie.year})`);
         }
 
@@ -279,7 +279,7 @@ class TraktInstance {
         }
 
         // If the mode is set to standard cli logging
-        if (this.credentials?.mode === 'log') {
+        if (this.credentials?.mode === 'standard_log') {
             console.log(`${formatDate()} | ${'Trakt Playing:'.red.bold} ${detail} - ${state}`);
         }
 
@@ -538,7 +538,7 @@ async function authoriseTrakt(gen: Configuration) {
         clientId: gen.clientId,
         clientSecret: gen.clientSecret,
         discordClientId: gen.discordClientId,
-        mode: gen.mode === 'Progress Bar' ? 'progress_bar' : 'log',
+        mode: gen.mode === 'Progress Bar' ? 'progress_bar' : 'standard_log',
     };
 
     try {
