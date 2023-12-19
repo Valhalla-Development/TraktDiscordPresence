@@ -17,7 +17,6 @@ interface Configuration {
     clientSecret: string;
     discordClientId: string;
     oAuth?: string;
-    mode: string;
 }
 
 interface TraktContent {
@@ -246,7 +245,7 @@ class TraktInstance {
         const elapsedDuration = DateTime.local().diff(DateTime.fromISO(watching.started_at), 'seconds').seconds;
 
         // Initialize progress bar if it doesn't exist
-        if (!progressBar && this.credentials?.mode === 'progress_bar') {
+        if (!progressBar) {
             progressBar = await generateProgressBar();
             progressBar.start(totalDuration, elapsedDuration, {
                 content: detail,
@@ -257,11 +256,6 @@ class TraktInstance {
 
         // If the progressBar instance exists, update its progress with the elapsed duration
         if (progressBar) progressBar.update(elapsedDuration);
-
-        // If the mode is set to standard cli logging
-        if (this.credentials?.mode === 'standard_log') {
-            console.log(`${formatDate()} | ${'Trakt Playing:'.red.bold} ${detail} (${movie.year})`);
-        }
 
         // Update Trakt content details
         return { ...traktContent, details: detail };
@@ -286,7 +280,7 @@ class TraktInstance {
         const elapsedDuration = DateTime.local().diff(DateTime.fromISO(watching.started_at), 'seconds').seconds;
 
         // Initialize progress bar if it doesn't exist
-        if (!progressBar && this.credentials?.mode === 'progress_bar') {
+        if (!progressBar) {
             progressBar = await generateProgressBar();
             progressBar.start(totalDuration, elapsedDuration, {
                 content: `${detail} - ${state}`,
@@ -297,11 +291,6 @@ class TraktInstance {
 
         // If the progressBar instance exists, update its progress with the elapsed duration
         if (progressBar) progressBar.update(elapsedDuration);
-
-        // If the mode is set to standard cli logging
-        if (this.credentials?.mode === 'standard_log') {
-            console.log(`${formatDate()} | ${'Trakt Playing:'.red.bold} ${detail} - ${state}`);
-        }
 
         // Update Trakt content details and state
         return { ...traktContent, details: detail, state };
@@ -503,22 +492,10 @@ async function generateTraktCredentials(): Promise<Configuration | null> {
         }`,
     );
 
-    const modePrompt = [{
-        type: 'select',
-        name: 'mode',
-        message: 'Please select which UI you would prefer.',
-        initial: 0,
-        choices: [
-            { name: 'Progress Bar', message: 'Progress Bar', value: '#ff0000' },
-            { name: 'Standard Log', message: 'Standard Log', value: '#00ff00' },
-        ],
-    }];
-
     return prompt([
         generatePromptConfig('input', 'clientId', 'Please provide your Trakt Client ID:'),
         generatePromptConfig('input', 'clientSecret', 'Please provide your Trakt Client Secret:'),
         generatePromptConfig('input', 'discordClientId', 'Please provide your Discord Client ID:'),
-        ...modePrompt,
     ]);
 }
 
@@ -563,7 +540,6 @@ async function authoriseTrakt(gen: Configuration) {
         clientId: gen.clientId,
         clientSecret: gen.clientSecret,
         discordClientId: gen.discordClientId,
-        mode: gen.mode === 'Progress Bar' ? 'progress_bar' : 'standard_log',
     };
 
     try {
