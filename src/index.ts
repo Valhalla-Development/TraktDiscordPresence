@@ -126,8 +126,6 @@ class TraktInstance {
 
     playing: boolean = false;
 
-    private credentials: Configuration | null = null;
-
     /**
      * Initializes the Trakt API object.
      *
@@ -137,9 +135,6 @@ class TraktInstance {
     async createTrakt(): Promise<Trakt> {
         // Fetch Trakt credentials
         const traktCredentials = await fetchTraktCredentials();
-
-        // Store the credentials for use in other TraktInstance functions
-        this.credentials = traktCredentials;
 
         // Create a new Trakt instance
         this.trakt = new Trakt({
