@@ -108,7 +108,7 @@ class DiscordRPC {
             }, 15 * 1000);
         } catch (err) {
             // Handle errors and retry after 15 seconds
-            console.log('Failed to connect to Discord. Retrying in 15 seconds.'.red, `(${err})`.italic);
+            console.error('Failed to connect to Discord. Retrying in 15 seconds.'.red, `(${err})`.italic);
             setTimeout(() => {
                 this.spawnRPC(trakt);
             }, 15 * 1000);
@@ -546,7 +546,7 @@ async function authoriseTrakt(gen: Configuration) {
         updatedCredentials.oAuth = await traktInstance.export_token();
     } catch (error) {
         // Handle errors during the token exchange process
-        console.log('\nAn incorrect token has been provided! Please restart the program and try again.'.red.bold);
+        console.error('\nAn incorrect token has been provided! Please restart the program and try again.'.red.bold);
         process.exit(1);
     }
 
