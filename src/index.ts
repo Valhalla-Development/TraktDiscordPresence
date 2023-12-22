@@ -84,6 +84,15 @@ enum ConnectionState {
 let instanceState: ConnectionState;
 
 /**
+ * Represents the interval ID for a NodeJS timeout.
+ */
+let retryInterval: NodeJS.Timeout;
+/**
+ * Represents the countdown timer value in seconds.
+ */
+let countdownTimer: number = 15;
+
+/**
  * This class is responsible for managing the Discord Rich Presence Client and its connection.
  *
  * @class
@@ -117,6 +126,9 @@ class DiscordRPC {
             // Login to Discord using Trakt's Discord client ID
             await rpc.login({ clientId: traktCredentials.discordClientId });
 
+            // Clear the retryInterval if it exists
+            if (retryInterval) clearInterval(retryInterval);
+
             // Update the status initially
             await trakt.updateStatus(this.statusInt);
 
@@ -129,7 +141,16 @@ class DiscordRPC {
             if (progressBar) progressBar.stop();
             progressBar = await generateProgressBar();
             progressBar.start(0, 0);
-            // Handle errors and retry after 15 seconds
+
+            // Start an interval that will decrement countdownTimer each second if disconnected
+            countdownTimer = 15;
+            // Clear the previous retry
+            if (retryInterval) clearInterval(retryInterval);
+            retryInterval = setInterval(() => {
+                if (countdownTimer > 0 && instanceState === ConnectionState.Disconnected) countdownTimer -= 1;
+            }, 1000);
+
+            // Retry the connection to RPC after 15 seconds
             setTimeout(() => {
                 this.spawnRPC(trakt);
             }, 15 * 1000);
@@ -377,8 +398,7 @@ async function generateProgressBar() {
             return 'Successfully connected to Discord!'.green;
 
         case ConnectionState.Disconnected:
-            return 'Failed to connect to Discord. Retrying in 15 seconds.'.red;
-
+            return `${'Failed to connect to Discord. Retrying in'.red} ${countdownTimer.toString().green} ${'seconds.'.red}`;
         default:
             return `${formatDate()} | ${'Trakt:'.red} Not Playing.`;
         }
