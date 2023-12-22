@@ -69,6 +69,21 @@ let rpc: Client | null;
 let progressBar: SingleBar | null;
 
 /**
+ * Enum representing the various states of a connection.
+ */
+enum ConnectionState {
+    Playing,
+    NotPlaying,
+    Connected,
+    Disconnected
+}
+
+/**
+ * Represents the state of a connection instance.
+ */
+let instanceState: ConnectionState;
+
+/**
  * This class is responsible for managing the Discord Rich Presence Client and its connection.
  *
  * @class
@@ -92,8 +107,11 @@ class DiscordRPC {
             rpc = new Client({ transport: 'ipc' });
 
             // Event handler for when the RPC client is ready
-            rpc.on('ready', () => {
-                console.log('Successfully connected to Discord!\n'.green);
+            rpc.on('ready', async () => {
+                instanceState = ConnectionState.Connected;
+                if (progressBar)progressBar.stop();
+                progressBar = await generateProgressBar();
+                progressBar.start(0, 0);
             });
 
             // Login to Discord using Trakt's Discord client ID
@@ -107,8 +125,11 @@ class DiscordRPC {
                 await trakt.updateStatus(this.statusInt);
             }, 15 * 1000);
         } catch (err) {
+            instanceState = ConnectionState.Disconnected;
+            if (progressBar) progressBar.stop();
+            progressBar = await generateProgressBar();
+            progressBar.start(0, 0);
             // Handle errors and retry after 15 seconds
-            console.error('Failed to connect to Discord. Retrying in 15 seconds.'.red, `(${err})`.italic);
             setTimeout(() => {
                 this.spawnRPC(trakt);
             }, 15 * 1000);
@@ -123,8 +144,6 @@ class DiscordRPC {
  */
 class TraktInstance {
     trakt: Trakt;
-
-    playing: boolean = false;
 
     /**
      * Initializes the Trakt API object.
@@ -164,12 +183,7 @@ class TraktInstance {
             // Clear the Discord status interval
             if (discordStatusInterval) clearInterval(discordStatusInterval);
 
-            // Destroy the RPC client
-            await rpc.destroy();
             rpc = null;
-
-            // Stop the progress bar if it exists
-            if (progressBar) progressBar.stop();
 
             // Respawn the RPC client
             await new DiscordRPC().spawnRPC(this);
@@ -181,12 +195,12 @@ class TraktInstance {
         const watching = await this.trakt.users.watching({ username: user.user.username });
 
         if (watching) {
-            if (!this.playing && progressBar) {
+            if (instanceState !== ConnectionState.Playing && progressBar) {
                 progressBar.stop();
                 progressBar = null;
             }
 
-            this.playing = true;
+            instanceState = ConnectionState.Playing;
 
             // Prepare Trakt content for Discord RPC
             let traktContent: TraktContent = {
@@ -207,7 +221,7 @@ class TraktInstance {
             return;
         }
 
-        this.playing = false;
+        instanceState = ConnectionState.NotPlaying;
 
         if (progressBar) {
             progressBar.stop();
@@ -336,7 +350,8 @@ function generateBarProgress(options: Options, params: Params): string {
 async function generateProgressBar() {
     // Define a custom format function for the progress bar
     const formatFunction: GenericFormatter = (options, params, payload) => {
-        if (payload && Object.keys(payload).length > 0) {
+        switch (instanceState) {
+        case ConnectionState.Playing: {
             // Extract relevant information from the payload
             const { startedAt, endsAt, content } = payload;
 
@@ -355,7 +370,18 @@ async function generateProgressBar() {
             return `${content.cyan.padStart(3)} ${barProgress} Started at ${localStartDate.green.bold} | Ends at ${localEndDate.green.bold} | Time Elapsed: ${prettyDuration.green.bold}`;
         }
 
-        return `${formatDate()} | ${'Trakt:'.red} Not Playing.`;
+        case ConnectionState.NotPlaying:
+            return `${formatDate()} | ${'Trakt:'.red} Not Playing.`;
+
+        case ConnectionState.Connected:
+            return 'Successfully connected to Discord!'.green;
+
+        case ConnectionState.Disconnected:
+            return 'Failed to connect to Discord. Retrying in 15 seconds.'.red;
+
+        default:
+            return `${formatDate()} | ${'Trakt:'.red} Not Playing.`;
+        }
     };
 
     // Create a new SingleBar instance with specified options
