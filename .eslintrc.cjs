@@ -32,6 +32,10 @@ module.exports = {
         'no-unused-expressions': 'off',
         'max-classes-per-file': 'off',
         'no-use-before-define': 'off',
-        'no-throw-literal': 'off'
+        'no-throw-literal': 'off',
+        'no-shadow': 'off',
+        '@typescript-eslint/no-shadow': ['error'],
+        'no-unused-vars': 'off',
+        '@typescript-eslint/no-unused-vars': ['error'],
     },
 };
