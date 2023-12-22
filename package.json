@@ -9,7 +9,8 @@
     "node": ">=16.0.0"
   },
   "scripts": {
-    "start": "tsc && node build/index.js"
+    "start": "tsc && node build/index.js",
+    "audit": "npx eslint . --format table"
   },
   "type": "module",
   "dependencies": {
