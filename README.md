@@ -71,9 +71,22 @@ limitations on Discord, this script is required to run on the same device as you
 If set up correctly, your output should resemble this:
 
 - **Example Output**
-  </br><img src="https://share.valhalladev.org/u/trakt_discord_presence.png" alt="Progress Bar" style="width: 1000px;">
+  </br><img src="https://share.valhalladev.org/u/trakt_discord_presence.png" alt="Example Output" style="width: 1000px;">
 - **Discord Example**
-  </br><img src="https://share.valhalladev.org/u/discord_example.png" alt="Progress Bar" style="width: 174px;">
+  </br><img src="https://share.valhalladev.org/u/discord_example.png" alt="Discord Example" style="width: 174px;">
+
+## Decorative Logging
+
+- **Connecting**
+  </br><img src="https://share.valhalladev.org/u/connecting.png" alt="Connecting" style="width: 250px;">
+- **Connected**
+  </br><img src="https://share.valhalladev.org/u/connected.png" alt="Connected" style="width: 220px;">
+- **Playing**
+  </br><img src="https://share.valhalladev.org/u/playing.png" alt="Playing" style="width: 1100px;">
+- **Not Playing**
+  </br><img src="https://share.valhalladev.org/u/not_playing.png" alt="Not Playing" style="width: 300px;">
+- **Disconnected**
+  </br><img src="https://share.valhalladev.org/u/disconnected.png" alt="Disconnected" style="width: 460px;">
 
 ## License
 
