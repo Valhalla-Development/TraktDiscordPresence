@@ -286,6 +286,7 @@ class TraktInstance {
                 content: detail,
                 startedAt: watching.started_at,
                 endsAt: watching.expires_at,
+                type: 'Movie',
             });
         }
 
@@ -321,6 +322,7 @@ class TraktInstance {
                 content: `${detail} - ${state}`,
                 startedAt: watching.started_at,
                 endsAt: watching.expires_at,
+                type: 'TV Show',
             });
         }
 
@@ -365,7 +367,8 @@ function generateBarProgress(options: Options, params: Params): string {
     const incomplete = (options.barIncompleteString || '').slice(0, Math.round((1 - params.progress) * (options.barsize ?? 0)));
 
     // Combine complete and incomplete parts to form the progress bar string.
-    return complete + incomplete;
+    // @ts-expect-error [issue with the package not defining 'bright' colors']
+    return `${complete.brightRed}${incomplete.green}`;
 }
 
 /**
@@ -379,44 +382,51 @@ async function generateProgressBar() {
         switch (instanceState) {
         case ConnectionState.Playing: {
             // Extract relevant information from the payload
-            const { startedAt, endsAt, content } = payload;
+            const {
+                startedAt, endsAt, content, type,
+            } = payload;
 
             // Format start and end dates in local time
-            const localStartDate = formatDateTime(startedAt);
             const localEndDate = formatDateTime(endsAt);
 
             // Calculate elapsed duration and format it in a human-readable format
             const elapsedDuration = calculateElapsedDuration(startedAt);
-            const prettyDuration = prettyMilliseconds(elapsedDuration * 1000, { secondsDecimalDigits: 0 });
+
+            // Remaining time of content
+            const totalDuration = (new Date(endsAt).getTime() - new Date(startedAt).getTime()) / 1000;
+            const remainingDuration = Math.max(totalDuration - elapsedDuration, 0);
+            const prettyRemainingTime = prettyMilliseconds(remainingDuration * 1000, { secondsDecimalDigits: 0 });
 
             // Generate progress bar
             const barProgress = generateBarProgress(options, params);
 
             // Construct the progress bar line with formatted information
-            return `${content.cyan.padStart(3)} ${barProgress} Started at ${localStartDate.green.bold} | Ends at ${localEndDate.green.bold} | Time Elapsed: ${prettyDuration.green.bold}`;
+            return `🎭 ${`[${type}]`.italic} ${content.yellow} ${barProgress} | Finishes At: ${localEndDate.blue} ⏳  Remaining: ${prettyRemainingTime.blue}`.bold.toString();
         }
 
         case ConnectionState.NotPlaying:
-            return `${formatDate()} | ${'Trakt:'.red} Not Playing.`;
+            return `📅 ${formatDate().green.italic} ${'|'.magenta} ${'Trakt:'.red} ${'Not playing.'}`.bold.toString();
 
         case ConnectionState.Connected:
-            return 'Successfully connected to Discord!'.green;
+            return '🎉 Connected to Discord!'.green.bold.toString();
 
         case ConnectionState.Disconnected:
-            return `${'Failed to connect to Discord. Retrying in'.red} ${countdownTimer.toString().green} ${'seconds.'.red}`;
+            // @ts-expect-error [issue with the package not defining 'bright' colors']
+            return `⚠️ ${'Discord connection lost. Retrying in'.red} ${countdownTimer.toString().brightBlue} ${'seconds... '.red}`.bold.toString();
 
         case ConnectionState.Connecting:
-            return `${'Connecting...'.green}`;
+            return '🔒 Connecting to Discord...'.magenta.bold.toString();
+
         default:
-            return `${formatDate()} | ${'Trakt:'.red} Not Playing.`;
+            return `📅 ${formatDate().green.italic} ${'|'.magenta} ${'Trakt:'.red} ${'Not playing.'}`.bold.toString();
         }
     };
 
     // Create a new SingleBar instance with specified options
     return new SingleBar({
         format: formatFunction,
-        barCompleteChar: '█',
-        barIncompleteChar: '░',
+        barCompleteChar: '\u2588',
+        barIncompleteChar: '\u2591',
         hideCursor: true,
         clearOnComplete: true,
         linewrap: true,
@@ -461,24 +471,20 @@ async function fetchTraktCredentials(): Promise<Configuration> {
 /**
  * Formats the current date and time into a specific format.
  *
- * @returns Returns the current date and time as a string, formatted like:
- * 'Thursday, April 14, 2022' for date, and '11:37 PM +08:00' for time.
- * The formatted date and time is styled using ANSI escape codes to be green and italic.
+ * @returns Returns the current date and time as a string, formatted like '5:12:35 PM'.
  *
  * @example
  * ```typescript
  * console.log(formatDate());
  * ```
- * will log the current date and time, formatted and styled as described above.
- *
- * Note: The ANSI styling will only be visible in environments that support it, like many terminal emulators.
+ * will log the current time, formatted as described above.
  *
  * This function uses `DateTime` from the `luxon` module to get the current date and time, and format it.
  */
 function formatDate(): string {
     const now = DateTime.now();
 
-    return `${now.toLocaleString(DateTime.DATE_HUGE)} - ${now.toLocaleString(DateTime.TIME_WITH_SHORT_OFFSET)}`.green.italic;
+    return now.toFormat('h:mm:ss a');
 }
 
 /**
