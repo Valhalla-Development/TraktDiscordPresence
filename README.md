@@ -71,7 +71,9 @@ limitations on Discord, this script is required to run on the same device as you
 If set up correctly, your output should resemble this:
 
 - **Example Output**
-  </br><img src="https://share.valhalladev.org/u/progress_bar.png" alt="Progress Bar" style="width: 1000px;">
+  </br><img src="https://share.valhalladev.org/u/trakt_discord_presence.png" alt="Progress Bar" style="width: 1000px;">
+- **Discord Example**
+  </br><img src="https://share.valhalladev.org/u/discord_example.png" alt="Progress Bar" style="width: 174px;">
 
 ## License
 
