@@ -15,9 +15,9 @@
   "type": "module",
   "dependencies": {
     "@types/luxon": "^3.3.7",
+    "@xhayper/discord-rpc": "^1.1.2",
     "cli-progress": "^3.12.0",
     "colors": "^1.4.0",
-    "discord-rpc": "^4.0.1",
     "enquirer": "^2.4.1",
     "luxon": "^3.4.4",
     "pretty-ms": "^8.0.0",
@@ -26,7 +26,6 @@
   },
   "devDependencies": {
     "@types/cli-progress": "^3.11.5",
-    "@types/discord-rpc": "^4.0.8",
     "@types/node": "^20.10.5",
     "@typescript-eslint/eslint-plugin": "^6.15.0",
     "@typescript-eslint/parser": "^6.15.0",

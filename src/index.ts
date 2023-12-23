@@ -3,7 +3,7 @@ import 'colors';
 import Enquirer from 'enquirer';
 // @ts-expect-error [currently, no types file exists for trakt.tv, so this will cause an error]
 import Trakt from 'trakt.tv';
-import { Client } from 'discord-rpc';
+import { Client } from '@xhayper/discord-rpc';
 import { DateTime } from 'luxon';
 import {
     GenericFormatter, Options, Params, SingleBar,
@@ -75,7 +75,8 @@ enum ConnectionState {
     Playing,
     NotPlaying,
     Connected,
-    Disconnected
+    Disconnected,
+    Connecting
 }
 
 /**
@@ -113,18 +114,23 @@ class DiscordRPC {
             const traktCredentials = await fetchTraktCredentials();
 
             // Initialize the RPC client with IPC transport
-            rpc = new Client({ transport: 'ipc' });
+            rpc = new Client({
+                clientId: traktCredentials.discordClientId,
+                transport: {
+                    type: 'ipc',
+                },
+            });
 
             // Event handler for when the RPC client is ready
             rpc.on('ready', async () => {
                 instanceState = ConnectionState.Connected;
-                if (progressBar)progressBar.stop();
+                if (progressBar) progressBar.stop();
                 progressBar = await generateProgressBar();
                 progressBar.start(0, 0);
             });
 
-            // Login to Discord using Trakt's Discord client ID
-            await rpc.login({ clientId: traktCredentials.discordClientId });
+            // Login to Discord
+            await rpc.login();
 
             // Clear the retryInterval if it exists
             if (retryInterval) clearInterval(retryInterval);
@@ -198,9 +204,8 @@ class TraktInstance {
     async updateStatus(discordStatusInterval: NodeJS.Timeout | null) {
         if (!rpc) return;
 
-        // Check if the RPC transport socket is not open
-        // @ts-expect-error [currently, no types file exists for trakt.tv, so this will cause an error]
-        if (rpc.transport.socket.readyState !== 'open') {
+        // Check if the RPC transport socket is connected
+        if (!rpc.transport.isConnected) {
             // Clear the Discord status interval
             if (discordStatusInterval) clearInterval(discordStatusInterval);
 
@@ -238,7 +243,7 @@ class TraktInstance {
             }
 
             // Set Discord activity with Trakt content
-            await rpc.setActivity({ ...traktContent });
+            await rpc.user?.setActivity({ ...traktContent });
             return;
         }
 
@@ -254,7 +259,7 @@ class TraktInstance {
         progressBar.start(0, 0);
 
         // Clear Discord activity
-        await rpc.clearActivity();
+        await rpc.user?.clearActivity();
     }
 
     /**
@@ -399,6 +404,9 @@ async function generateProgressBar() {
 
         case ConnectionState.Disconnected:
             return `${'Failed to connect to Discord. Retrying in'.red} ${countdownTimer.toString().green} ${'seconds.'.red}`;
+
+        case ConnectionState.Connecting:
+            return `${'Connecting...'.green}`;
         default:
             return `${formatDate()} | ${'Trakt:'.red} Not Playing.`;
         }
@@ -641,6 +649,11 @@ async function main(): Promise<void> {
                 await authoriseTrakt(generatedCredentials);
             }
         }
+
+        // Create an initial progress bar indicating progress.
+        instanceState = ConnectionState.Connecting;
+        progressBar = await generateProgressBar();
+        progressBar.start(0, 0);
 
         // Initialize Trakt and Discord RPC
         await initializeTraktAndDiscordRPC();
