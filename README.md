@@ -64,19 +64,14 @@ limitations on Discord, this script is required to run on the same device as you
    and [Discord Client ID](https://discord.com/developers/applications) (Refer to `App Configuration` section if not
    already setup).
 
-3. It prompts for your preferred UI mode, either 'Progress Bar' or 'Standard Log' Examples of both outputs can be seen
-   at the bottom of this page.
+3. You're then provided a `URL`. Paste this onto any browser, retrieve the code and enter it in your terminal.
 
-4. You're then provided a `URL`. Paste this onto any browser, retrieve the code and enter it in your terminal.
-
-5. Run `yarn start` to launch the program.
+4. Run `yarn start` to launch the program.
 
 If set up correctly, your output should resemble this:
 
-- **Progress Bar**
+- **Example Output**
   </br><img src="https://share.valhalladev.org/u/progress_bar.png" alt="Progress Bar" style="width: 1000px;">
-- **Standard Log**
-  </br><img src="https://share.valhalladev.org/u/standard_log.png" alt="Standard Log" style="width: 700px;">
 
 ## License
 
