@@ -367,8 +367,8 @@ function generateBarProgress(options: Options, params: Params): string {
     const incomplete = (options.barIncompleteString || '').slice(0, Math.round((1 - params.progress) * (options.barsize ?? 0)));
 
     // Combine complete and incomplete parts to form the progress bar string.
-    // @ts-expect-error [issue with the package not defining 'bright' colors']
-    return `${complete.brightRed}${incomplete.green}`;
+    // @ts-expect-error [issue with the package not defining 'bright' colors within its type definitions]
+    return `${complete.red}${incomplete.brightBlue}`;
 }
 
 /**
@@ -380,6 +380,11 @@ async function generateProgressBar() {
     // Define a custom format function for the progress bar
     const formatFunction: GenericFormatter = (options, params, payload) => {
         switch (instanceState) {
+        case ConnectionState.Connecting:
+            return '🔒 Connecting to Discord...'.magenta.bold.toString();
+
+        case ConnectionState.Connected:
+            return '🎉 Connected to Discord!'.green.bold.toString();
         case ConnectionState.Playing: {
             // Extract relevant information from the payload
             const {
@@ -401,21 +406,16 @@ async function generateProgressBar() {
             const barProgress = generateBarProgress(options, params);
 
             // Construct the progress bar line with formatted information
-            return `🎭 ${`[${type}]`.italic} ${content.yellow} ${barProgress} | Finishes At: ${localEndDate.blue} ⏳  Remaining: ${prettyRemainingTime.blue}`.bold.toString();
+            // @ts-expect-error [issue with the package not defining 'bright' colors within its type definitions]
+            return `🎭 ${`[${type}]`.italic} ${content.yellow} ${barProgress} Finishes At: ${localEndDate.brightBlue} ⏳  Remaining: ${prettyRemainingTime.brightBlue}`.bold.toString();
         }
 
         case ConnectionState.NotPlaying:
             return `📅 ${formatDate().green.italic} ${'|'.magenta} ${'Trakt:'.red} ${'Not playing.'}`.bold.toString();
 
-        case ConnectionState.Connected:
-            return '🎉 Connected to Discord!'.green.bold.toString();
-
         case ConnectionState.Disconnected:
-            // @ts-expect-error [issue with the package not defining 'bright' colors']
-            return `⚠️ ${'Discord connection lost. Retrying in'.red} ${countdownTimer.toString().brightBlue} ${'seconds... '.red}`.bold.toString();
-
-        case ConnectionState.Connecting:
-            return '🔒 Connecting to Discord...'.magenta.bold.toString();
+            // @ts-expect-error [issue with the package not defining 'bright' colors within its type definitions]
+            return `⚠️ ${'Discord connection lost. Retrying in'.brightRed} ${countdownTimer.toString().brightBlue} ${'seconds... '.red}`.bold.toString();
 
         default:
             return `📅 ${formatDate().green.italic} ${'|'.magenta} ${'Trakt:'.red} ${'Not playing.'}`.bold.toString();
@@ -425,8 +425,8 @@ async function generateProgressBar() {
     // Create a new SingleBar instance with specified options
     return new SingleBar({
         format: formatFunction,
-        barCompleteChar: '\u2588',
-        barIncompleteChar: '\u2591',
+        barCompleteChar: '█',
+        barIncompleteChar: '░',
         hideCursor: true,
         clearOnComplete: true,
         linewrap: true,
