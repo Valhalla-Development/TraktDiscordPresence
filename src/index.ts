@@ -143,13 +143,16 @@ class DiscordRPC {
                 await trakt.updateStatus(this.statusInt);
             }, 15 * 1000);
         } catch (err) {
-            instanceState = ConnectionState.Disconnected;
-            if (progressBar) progressBar.stop();
-            progressBar = await generateProgressBar();
-            progressBar.start(0, 0);
+            if (instanceState !== ConnectionState.Disconnected) {
+                instanceState = ConnectionState.Disconnected;
+                if (progressBar) progressBar.stop();
+                progressBar = await generateProgressBar();
+                progressBar.start(0, 0);
+            }
 
             // Start an interval that will decrement countdownTimer each second if disconnected
             countdownTimer = 15;
+
             // Clear the previous retry
             if (retryInterval) clearInterval(retryInterval);
             retryInterval = setInterval(() => {
