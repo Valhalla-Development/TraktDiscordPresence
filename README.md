@@ -71,13 +71,13 @@ limitations on Discord, this script is required to run on the same device as you
 If set up correctly, your output should resemble this:
 
 - **Example Output**
-  </br><img src="https://share.valhalladev.org/u/playing_1.png" alt="Example Output" style="width: 1200px;">
+  </br><img src="https://share.valhalladev.org/u/playing.png" alt="Example Output" style="width: 1200px;">
 - **Discord Example**
   </br><img src="https://share.valhalladev.org/u/discord_example.png" alt="Discord Example" style="width: 220px;">
 
 ## Decorative Logging
 
-</br><img src="https://share.valhalladev.org/u/decorative_logging_1.png" alt="Decorative Logging" style="width: 1000px;">
+</br><img src="https://share.valhalladev.org/u/decorative_logging.png" alt="Decorative Logging" style="width: 1000px;">
 
 ## License
 
