@@ -428,7 +428,7 @@ async function generateProgressBar() {
 
         case ConnectionState.Disconnected:
             // @ts-expect-error [issue with the package not defining 'bright' colors within its type definitions]
-            return `⚠️ ${'Discord connection lost. Retrying in'.brightRed} ${countdownTimer.toString().brightBlue} ${'seconds... '.red}`.bold.toString();
+            return `⚠️ ${'Discord connection lost. Retrying in'.brightRed} ${countdownTimer.toString().brightBlue} ${'seconds... '.brightRed}`.bold.toString();
 
         default:
             return `📅 ${formatDate().green.italic} ${'|'.magenta} ${'Trakt:'.red} ${'Not playing.'}`.bold.toString();
