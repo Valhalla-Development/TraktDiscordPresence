@@ -205,10 +205,66 @@ class TraktInstance {
      * @param discordStatusInterval - Timeout interval for updating the Discord status.
      */
     async updateStatus(discordStatusInterval: NodeJS.Timeout | null) {
-        if (!rpc) return;
+        try {
+            if (!rpc) return;
 
-        // Check if the RPC transport socket is connected
-        if (!rpc.transport.isConnected) {
+            // Check if the RPC transport socket is connected
+            if (!rpc.transport.isConnected) {
+                // Clear the Discord status interval
+                if (discordStatusInterval) clearInterval(discordStatusInterval);
+
+                rpc = null;
+
+                // Respawn the RPC client
+                await new DiscordRPC().spawnRPC(this);
+                return;
+            }
+
+            // Fetch user settings and currently watching content from Trakt
+            const user = await this.trakt.users.settings();
+            const watching = await this.trakt.users.watching({ username: user.user.username });
+
+            if (watching) {
+                if (instanceState !== ConnectionState.Playing && progressBar) {
+                    progressBar.stop();
+                    progressBar = null;
+                }
+
+                instanceState = ConnectionState.Playing;
+
+                // Prepare Trakt content for Discord RPC
+                let traktContent: TraktContent = {
+                    smallImageKey: 'play',
+                    largeImageKey: 'trakt',
+                    startTimestamp: new Date(watching.started_at),
+                };
+
+                // Handle different content types (movie or episode)
+                if (watching.type === 'movie') {
+                    traktContent = await this.handleMovie(watching, traktContent);
+                } else if (watching.type === 'episode') {
+                    traktContent = await this.handleEpisode(watching, traktContent);
+                }
+
+                // Set Discord activity with Trakt content
+                await rpc.user?.setActivity({ ...traktContent });
+                return;
+            }
+
+            instanceState = ConnectionState.NotPlaying;
+
+            if (progressBar) {
+                progressBar.stop();
+                progressBar = null;
+            }
+
+            // Initialize progress bar if it doesn't exist
+            progressBar = await generateProgressBar();
+            progressBar.start(0, 0);
+
+            // Clear Discord activity
+            await rpc.user?.clearActivity();
+        } catch {
             // Clear the Discord status interval
             if (discordStatusInterval) clearInterval(discordStatusInterval);
 
@@ -216,53 +272,7 @@ class TraktInstance {
 
             // Respawn the RPC client
             await new DiscordRPC().spawnRPC(this);
-            return;
         }
-
-        // Fetch user settings and currently watching content from Trakt
-        const user = await this.trakt.users.settings();
-        const watching = await this.trakt.users.watching({ username: user.user.username });
-
-        if (watching) {
-            if (instanceState !== ConnectionState.Playing && progressBar) {
-                progressBar.stop();
-                progressBar = null;
-            }
-
-            instanceState = ConnectionState.Playing;
-
-            // Prepare Trakt content for Discord RPC
-            let traktContent: TraktContent = {
-                smallImageKey: 'play',
-                largeImageKey: 'trakt',
-                startTimestamp: new Date(watching.started_at),
-            };
-
-            // Handle different content types (movie or episode)
-            if (watching.type === 'movie') {
-                traktContent = await this.handleMovie(watching, traktContent);
-            } else if (watching.type === 'episode') {
-                traktContent = await this.handleEpisode(watching, traktContent);
-            }
-
-            // Set Discord activity with Trakt content
-            await rpc.user?.setActivity({ ...traktContent });
-            return;
-        }
-
-        instanceState = ConnectionState.NotPlaying;
-
-        if (progressBar) {
-            progressBar.stop();
-            progressBar = null;
-        }
-
-        // Initialize progress bar if it doesn't exist
-        progressBar = await generateProgressBar();
-        progressBar.start(0, 0);
-
-        // Clear Discord activity
-        await rpc.user?.clearActivity();
     }
 
     /**
