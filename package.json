@@ -1,7 +1,7 @@
 {
   "name": "traktdiscordpresence",
   "description": "Set your Discord presence according to what you are watching on Trakt.tv",
-  "version": "2.0.58",
+  "version": "2.0.59",
   "repository": "https://github.com/RagnarLothbrok-Odin/TraktDiscordPresence.git",
   "author": "Ragnar Lothbrok <ragnarlothbrokjr@proton.me>",
   "license": "MIT",
