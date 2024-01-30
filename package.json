@@ -1,39 +1,45 @@
 {
   "name": "traktdiscordpresence",
-  "description": "Set your Discord presence according to what you are watching on Trakt.tv",
   "version": "2.0.59",
-  "repository": "https://github.com/RagnarLothbrok-Odin/TraktDiscordPresence.git",
-  "author": "Ragnar Lothbrok <ragnarlothbrokjr@proton.me>",
+  "description": "Set your Discord presence according to what you are watching on Trakt.tv",
   "license": "MIT",
-  "engines": {
-    "node": ">=16.0.0"
-  },
-  "scripts": {
-    "start": "tsc && node build/index.js",
-    "audit": "npx eslint . --format table"
+  "author": "Ragnar Lothbrok <ragnarlothbrokjr@proton.me>",
+  "homepage": "https://github.com/Valhalla-Development/TraktDiscordPresence#readme",
+  "repository": "https://github.com/RagnarLothbrok-Odin/TraktDiscordPresence.git",
+  "bugs": {
+    "url": "https://github.com/Valhalla-Development/TraktDiscordPresence/issues"
   },
   "type": "module",
+  "main": "build/index.js",
+  "scripts": {
+    "audit": "eslint . --format codeframe",
+    "dev": "tsc-watch --onSuccess \"node ./build/index.js\"",
+    "start": "tsc && node build/index.js"
+  },
   "dependencies": {
-    "@types/luxon": "^3.3.7",
+    "@types/luxon": "^3.4.2",
     "@xhayper/discord-rpc": "^1.1.2",
     "cli-progress": "^3.12.0",
     "colors": "^1.4.0",
     "enquirer": "^2.4.1",
     "luxon": "^3.4.4",
-    "pretty-ms": "^8.0.0",
-    "trakt.tv": "^8.2.0",
-    "ts-node": "^10.9.2"
+    "pretty-ms": "^9.0.0",
+    "trakt.tv": "^8.2.0"
   },
   "devDependencies": {
     "@types/cli-progress": "^3.11.5",
-    "@types/node": "^20.10.5",
-    "@typescript-eslint/eslint-plugin": "^6.15.0",
-    "@typescript-eslint/parser": "^6.15.0",
+    "@types/node": "^20.11.10",
+    "@typescript-eslint/eslint-plugin": "^6.20.0",
+    "@typescript-eslint/parser": "^6.20.0",
     "eslint": "^8.56.0",
     "eslint-config-airbnb": "^19.0.4",
-    "eslint-formatter-table": "^7.32.1",
+    "eslint-formatter-codeframe": "^7.32.1",
     "eslint-plugin-import": "^2.29.1",
+    "tsc-watch": "^6.0.4",
     "typescript": "^5.3.3"
+  },
+  "engines": {
+    "node": ">=18.0.0"
   },
   "packageManager": "yarn@4.0.2"
 }
