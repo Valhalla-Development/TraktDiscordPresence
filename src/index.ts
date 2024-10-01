@@ -80,8 +80,8 @@ async function ensureAuthentication(): Promise<Configuration> {
         try {
             config = await fetchTraktCredentials();
             updateTraktCredentials(config);
-        } catch (error) {
-            console.error(chalk.red('Failed to read existing configuration. Generating new credentials.', error));
+        } catch {
+            console.error(chalk.red('Failed to read existing configuration. Generating new credentials.'));
             config = await generateTraktCredentials();
             await authoriseTrakt(config);
         }
