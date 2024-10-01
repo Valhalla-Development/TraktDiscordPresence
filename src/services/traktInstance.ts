@@ -4,7 +4,7 @@ import {
     ConnectionState, Movie, TvShow, TraktContent,
 } from '../types';
 import { updateProgressBar } from '../utils/progressBar.js';
-import { appState, updateInstanceState, updateTraktCredentials } from '../state/appState.js';
+import { appState, updateInstanceState } from '../state/appState.js';
 import { DiscordRPC } from './discordRPC.js';
 
 export class TraktInstance {
@@ -20,7 +20,23 @@ export class TraktInstance {
             client_secret: appState.traktCredentials.clientSecret,
         });
 
-        this.trakt.import_token(appState.traktCredentials.oAuth);
+        if (appState.traktCredentials.oAuth) {
+            this.trakt.import_token(JSON.parse(appState.traktCredentials.oAuth));
+        }
+    }
+
+    async getAuthorizationUrl(): Promise<string> {
+        return this.trakt.get_url();
+    }
+
+    async exchangeCodeForToken(code: string): Promise<any> {
+        try {
+            await this.trakt.exchange_code(code);
+            return this.trakt.export_token();
+        } catch (error) {
+            console.error('Failed to exchange code for token:', error);
+            throw error;
+        }
     }
 
     async updateStatus(): Promise<void> {
