@@ -59,10 +59,14 @@ async function authoriseTrakt(config: Configuration): Promise<void> {
 
     try {
         const token = await traktInstance.exchangeCodeForToken(auth.code);
-        config.oAuth = JSON.stringify(token);
-        updateTraktCredentials(config);
-        writeFileSync('./config.json', JSON.stringify(config, null, 2));
+        const updatedConfig = {
+            ...config,
+            oAuth: JSON.stringify(token),
+        };
+        updateTraktCredentials(updatedConfig);
+        writeFileSync('./config.json', JSON.stringify(updatedConfig, null, 2));
 
+        // Clear the console after successful authentication
         console.clear();
     } catch (error) {
         console.error(chalk.red('\nFailed to exchange code for token:'), error);
@@ -70,27 +74,23 @@ async function authoriseTrakt(config: Configuration): Promise<void> {
     }
 }
 
-async function ensureAuthentication(): Promise<Configuration> {
-    let config: Configuration;
-
+async function ensureAuthentication(): Promise<void> {
     if (!existsSync('./config.json')) {
-        config = await generateTraktCredentials();
+        const config = await generateTraktCredentials();
         await authoriseTrakt(config);
     } else {
         try {
-            config = await fetchTraktCredentials();
+            const config = await fetchTraktCredentials();
             updateTraktCredentials(config);
         } catch {
             console.error(chalk.red('Failed to read existing configuration. Generating new credentials.'));
-            config = await generateTraktCredentials();
+            const config = await generateTraktCredentials();
             await authoriseTrakt(config);
         }
     }
-
-    return config;
 }
 
-async function startApplication(config: Configuration): Promise<void> {
+async function startApplication(): Promise<void> {
     updateInstanceState(ConnectionState.Connecting);
     initializeProgressBar();
 
@@ -103,8 +103,8 @@ async function startApplication(config: Configuration): Promise<void> {
 
 async function main(): Promise<void> {
     try {
-        const config = await ensureAuthentication();
-        await startApplication(config);
+        await ensureAuthentication();
+        await startApplication();
     } catch (error) {
         console.error(chalk.red(`\nAn error occurred: ${error}`));
         process.exit(1);
