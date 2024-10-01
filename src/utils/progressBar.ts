@@ -6,7 +6,14 @@ import { appState } from '../state/appState.js';
 
 let progressBar: SingleBar | null = null;
 
-export async function generateProgressBar(): Promise<SingleBar> {
+export function initializeProgressBar(): void {
+    if (!progressBar) {
+        progressBar = generateProgressBar();
+    }
+    updateProgressBar();
+}
+
+export function generateProgressBar(): SingleBar {
     const formatFunction = (options: Options, params: Params, payload: any) => {
         switch (appState.instanceState) {
         case ConnectionState.Connecting:
@@ -36,9 +43,9 @@ export async function generateProgressBar(): Promise<SingleBar> {
     });
 }
 
-export async function updateProgressBar(content?: string, startedAt?: string, endsAt?: string, type?: string): Promise<void> {
+export function updateProgressBar(content?: string, startedAt?: string, endsAt?: string, type?: string): void {
     if (!progressBar) {
-        progressBar = await generateProgressBar();
+        progressBar = generateProgressBar();
     }
 
     if (appState.instanceState === ConnectionState.Playing && content && startedAt && endsAt && type) {
