@@ -10,8 +10,8 @@ export class DiscordRPC {
     async spawnRPC(trakt: TraktInstance): Promise<void> {
         try {
             if (!appState.traktCredentials) {
-                console.error('Trakt credentials not found');
-                updateInstanceState(ConnectionState.Disconnected);
+                updateInstanceState(ConnectionState.Error);
+                updateProgressBar({ error: 'Trakt credentials not found' });
                 return;
             }
 
@@ -35,10 +35,10 @@ export class DiscordRPC {
 
             await trakt.updateStatus();
 
-            // Set up interval for updating status
             setInterval(() => trakt.updateStatus(), 15000);
         } catch (err) {
-            console.error('Failed to connect to Discord:', err);
+            updateInstanceState(ConnectionState.Error);
+            updateProgressBar({ error: `Failed to connect to Discord: ${err}` });
             await this.handleConnectionFailure(trakt);
         }
     }
@@ -54,6 +54,7 @@ export class DiscordRPC {
         const newInterval = setInterval(() => {
             if (appState.countdownTimer > 0 && appState.instanceState === ConnectionState.Disconnected) {
                 updateCountdownTimer(appState.countdownTimer - 1);
+                updateProgressBar();
             }
         }, 1000);
         updateRetryInterval(newInterval);
