@@ -1,5 +1,5 @@
 import { Client } from '@xhayper/discord-rpc';
-import { ConnectionState, Configuration } from '../types';
+import { ConnectionState } from '../types';
 import { TraktInstance } from './traktInstance';
 import { updateProgressBar } from '../utils/progressBar';
 import {
@@ -9,10 +9,14 @@ import {
 export class DiscordRPC {
     private statusInterval: NodeJS.Timeout | null = null;
 
-    async spawnRPC(trakt: TraktInstance, traktCredentials: Configuration): Promise<void> {
+    async spawnRPC(trakt: TraktInstance): Promise<void> {
         try {
+            if (!appState.traktCredentials) {
+                throw new Error('Trakt credentials not found');
+            }
+
             const rpc = new Client({
-                clientId: traktCredentials.discordClientId,
+                clientId: appState.traktCredentials.discordClientId,
                 transport: { type: 'ipc' },
             });
 
@@ -49,10 +53,11 @@ export class DiscordRPC {
         const newInterval = setInterval(() => {
             if (appState.countdownTimer > 0 && appState.instanceState === ConnectionState.Disconnected) {
                 updateCountdownTimer(appState.countdownTimer - 1);
+                updateProgressBar();
             }
         }, 1000);
         updateRetryInterval(newInterval);
 
-        setTimeout(() => this.spawnRPC(trakt, appState.traktCredentials), 15000);
+        setTimeout(() => this.spawnRPC(trakt), 15000);
     }
 }
