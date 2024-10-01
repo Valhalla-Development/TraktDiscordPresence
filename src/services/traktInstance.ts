@@ -42,8 +42,8 @@ export class TraktInstance {
     async updateStatus(): Promise<void> {
         try {
             if (!appState.rpc || !appState.rpc.transport.isConnected) {
-                console.error('Discord RPC not connected');
-                updateInstanceState(ConnectionState.Disconnected);
+                updateInstanceState(ConnectionState.Error);
+                updateProgressBar({ error: 'Discord RPC not connected' });
                 return;
             }
 
@@ -55,10 +55,11 @@ export class TraktInstance {
                 await this.handleWatchingContent(watching);
             } else {
                 updateInstanceState(ConnectionState.NotPlaying);
-                await this.handleNotPlaying();
+                updateProgressBar();
             }
         } catch (error) {
-            console.error('Failed to update status:', error);
+            updateInstanceState(ConnectionState.Error);
+            updateProgressBar({ error: `Failed to update status: ${error}` });
             await this.handleUpdateFailure();
         }
     }
@@ -81,7 +82,13 @@ export class TraktInstance {
         const { movie } = watching;
         const detail = `${movie.title} (${movie.year})`;
 
-        updateProgressBar(detail, watching.started_at, watching.expires_at, 'Movie');
+        updateProgressBar({
+            content: detail,
+            startedAt: watching.started_at,
+            endsAt: watching.expires_at,
+            type: 'Movie',
+        });
+
         await appState.rpc?.user?.setActivity({ ...traktContent, details: detail });
     }
 
@@ -90,13 +97,14 @@ export class TraktInstance {
         const detail = show.title;
         const state = `S${episode.season}E${episode.number} (${episode.title})`;
 
-        updateProgressBar(`${detail} - ${state}`, watching.started_at, watching.expires_at, 'TV Show');
-        await appState.rpc?.user?.setActivity({ ...traktContent, details: detail, state });
-    }
+        updateProgressBar({
+            content: `${detail} - ${state}`,
+            startedAt: watching.started_at,
+            endsAt: watching.expires_at,
+            type: 'TV Show',
+        });
 
-    private async handleNotPlaying(): Promise<void> {
-        updateProgressBar();
-        await appState.rpc?.user?.clearActivity();
+        await appState.rpc?.user?.setActivity({ ...traktContent, details: detail, state });
     }
 
     private async handleUpdateFailure(): Promise<void> {
