@@ -46,6 +46,7 @@ export interface ProgressBarPayload {
     startedAt?: string;
     endsAt?: string;
     type?: string;
+    error?: string;
 }
 
 export const enum ConnectionState {
@@ -53,5 +54,6 @@ export const enum ConnectionState {
     NotPlaying,
     Connected,
     Disconnected,
-    Connecting
+    Connecting,
+    Error
 }
