@@ -35,6 +35,19 @@ export interface TvShow {
     }
 }
 
+export interface TraktToken {
+    access_token: string;
+    expires: number;
+    refresh_token: string;
+}
+
+export interface ProgressBarPayload {
+    content?: string;
+    startedAt?: string;
+    endsAt?: string;
+    type?: string;
+}
+
 export const enum ConnectionState {
     Playing,
     NotPlaying,
