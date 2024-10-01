@@ -42,7 +42,9 @@ export class TraktInstance {
     async updateStatus(): Promise<void> {
         try {
             if (!appState.rpc || !appState.rpc.transport.isConnected) {
-                throw new Error('Discord RPC not connected');
+                console.error('Discord RPC not connected');
+                updateInstanceState(ConnectionState.Disconnected);
+                return;
             }
 
             const user = await this.trakt.users.settings();
