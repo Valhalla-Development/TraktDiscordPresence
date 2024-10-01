@@ -22,7 +22,7 @@ export class DiscordRPC {
 
             rpc.on('ready', async () => {
                 updateInstanceState(ConnectionState.Connected);
-                await updateProgressBar();
+                updateProgressBar();
             });
 
             await rpc.login();
@@ -44,7 +44,7 @@ export class DiscordRPC {
 
     private async handleConnectionFailure(trakt: TraktInstance): Promise<void> {
         updateInstanceState(ConnectionState.Disconnected);
-        await updateProgressBar();
+        updateProgressBar();
 
         updateCountdownTimer(15);
         if (appState.retryInterval) {
