@@ -1,10 +1,10 @@
 import { existsSync, readFileSync, writeFileSync } from 'fs';
 import Enquirer from 'enquirer';
 import chalk from 'chalk';
-import { Configuration } from './types';
+import { Configuration, ConnectionState } from './types';
 import { TraktInstance } from './services/traktInstance.js';
 import { DiscordRPC } from './services/discordRPC.js';
-import { updateTraktCredentials } from './state/appState.js';
+import { updateTraktCredentials, updateInstanceState } from './state/appState.js';
 import { initializeProgressBar } from './utils/progressBar.js';
 
 const { prompt } = Enquirer;
@@ -47,9 +47,6 @@ async function authoriseTrakt(config: Configuration): Promise<void> {
     const traktInstance = new TraktInstance();
     await traktInstance.createTrakt();
 
-    console.log(chalk.green('\nTrakt instance created successfully.'));
-    console.log(chalk.yellow('Please authorize the application in your browser.'));
-
     const authUrl = await traktInstance.getAuthorizationUrl();
     console.log(chalk.blue('\nPlease visit this URL to authorize:'));
     console.log(chalk.blue.underline(authUrl));
@@ -65,7 +62,8 @@ async function authoriseTrakt(config: Configuration): Promise<void> {
         config.oAuth = JSON.stringify(token);
         updateTraktCredentials(config);
         writeFileSync('./config.json', JSON.stringify(config, null, 2));
-        console.log(chalk.green('\nConfiguration saved successfully.'));
+
+        console.clear();
     } catch (error) {
         console.error(chalk.red('\nFailed to exchange code for token:'), error);
         throw error;
@@ -93,6 +91,9 @@ async function ensureAuthentication(): Promise<Configuration> {
 }
 
 async function startApplication(config: Configuration): Promise<void> {
+    updateInstanceState(ConnectionState.Connecting);
+    initializeProgressBar();
+
     const traktInstance = new TraktInstance();
     await traktInstance.createTrakt();
 
