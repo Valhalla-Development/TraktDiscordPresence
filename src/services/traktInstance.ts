@@ -78,11 +78,15 @@ export class TraktInstance {
             startTimestamp: new Date(watching.started_at),
         };
 
-        if ('movie' in watching) {
+        if (this.isMovie(watching)) {
             await this.handleMovie(watching, traktContent);
         } else {
             await this.handleEpisode(watching, traktContent);
         }
+    }
+
+    private isMovie(content: Movie | TvShow): content is Movie {
+        return 'movie' in content;
     }
 
     private async handleMovie(watching: Movie, traktContent: TraktContent): Promise<void> {
