@@ -5,7 +5,7 @@ import { Configuration } from './types';
 import { TraktInstance } from './services/traktInstance.js';
 import { DiscordRPC } from './services/discordRPC.js';
 import { updateTraktCredentials } from './state/appState.js';
-import { updateProgressBar } from './utils/progressBar.js';
+import { initializeProgressBar } from './utils/progressBar.js';
 
 const { prompt } = Enquirer;
 
@@ -99,13 +99,15 @@ async function startApplication(config: Configuration): Promise<void> {
     await traktInstance.createTrakt();
 
     console.log(chalk.cyan('Connecting to Discord...'));
-    updateProgressBar();
 
     const discordRPC = new DiscordRPC();
     await discordRPC.spawnRPC(traktInstance);
 
     console.log(chalk.green('\nApplication started successfully.'));
     console.log(chalk.yellow('You can now start using Trakt. Your Discord status will update automatically.\n'));
+
+    // Initialize the progress bar after all console logs
+    initializeProgressBar();
 }
 
 async function main(): Promise<void> {
