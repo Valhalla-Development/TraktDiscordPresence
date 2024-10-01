@@ -1,7 +1,7 @@
 import { SingleBar, Options, Params } from 'cli-progress';
 import chalk from 'chalk';
 import { DateTime } from 'luxon';
-import { ConnectionState } from '../types';
+import { ConnectionState, ProgressBarPayload } from '../types';
 import { appState } from '../state/appState.js';
 
 let progressBar: SingleBar | null = null;
@@ -14,7 +14,7 @@ export function initializeProgressBar(): void {
 }
 
 export function generateProgressBar(): SingleBar {
-    const formatFunction = (options: Options, params: Params, payload: any) => {
+    const formatFunction = (options: Options, params: Params, payload: ProgressBarPayload) => {
         switch (appState.instanceState) {
         case ConnectionState.Connecting:
             return chalk.magenta.bold('🔒 Connecting to Discord...');
@@ -65,10 +65,14 @@ export function updateProgressBar(content?: string, startedAt?: string, endsAt?:
     }
 }
 
-function formatPlayingState(options: Options, params: Params, payload: any): string {
+function formatPlayingState(options: Options, params: Params, payload: ProgressBarPayload): string {
     const {
         startedAt, endsAt, content, type,
     } = payload;
+    if (!startedAt || !endsAt || !content || !type) {
+        return 'Invalid payload for playing state';
+    }
+
     const localEndDate = formatDateTime(endsAt);
     const elapsedDuration = calculateElapsedDuration(startedAt);
     const totalDuration = (new Date(endsAt).getTime() - new Date(startedAt).getTime()) / 1000;
