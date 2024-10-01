@@ -10,6 +10,12 @@ import { DiscordRPC } from './discordRPC.js';
 export class TraktInstance {
     private trakt: Trakt;
 
+    private discordRPC: DiscordRPC;
+
+    constructor() {
+        this.discordRPC = new DiscordRPC();
+    }
+
     async createTrakt(): Promise<void> {
         if (!appState.traktCredentials) {
             throw new Error('Trakt credentials not found');
@@ -42,8 +48,9 @@ export class TraktInstance {
     async updateStatus(): Promise<void> {
         try {
             if (!appState.rpc || !appState.rpc.transport.isConnected) {
-                updateInstanceState(ConnectionState.Error);
-                updateProgressBar({ error: 'Discord RPC not connected' });
+                updateInstanceState(ConnectionState.Disconnected);
+                updateProgressBar({ error: 'Discord RPC not connected. Attempting to reconnect...' });
+                await this.discordRPC.spawnRPC(this);
                 return;
             }
 
@@ -109,7 +116,6 @@ export class TraktInstance {
 
     private async handleUpdateFailure(): Promise<void> {
         updateInstanceState(ConnectionState.Disconnected);
-        const discordRPC = new DiscordRPC();
-        await discordRPC.spawnRPC(this);
+        await this.discordRPC.spawnRPC(this);
     }
 }
