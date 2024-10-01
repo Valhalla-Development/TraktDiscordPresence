@@ -1,22 +1,26 @@
 // @ts-expect-error [currently, no types file exists for trakt.tv, so this will cause an error]
 import Trakt from 'trakt.tv';
 import {
-    ConnectionState, Configuration, Movie, TvShow, TraktContent,
+    ConnectionState, Movie, TvShow, TraktContent,
 } from '../types';
 import { updateProgressBar } from '../utils/progressBar';
-import { appState, updateInstanceState } from '../state/appState';
+import { appState, updateInstanceState, updateTraktCredentials } from '../state/appState';
 import { DiscordRPC } from './discordRPC';
 
 export class TraktInstance {
     private trakt: Trakt;
 
-    async createTrakt(traktCredentials: Configuration): Promise<void> {
+    async createTrakt(): Promise<void> {
+        if (!appState.traktCredentials) {
+            throw new Error('Trakt credentials not found');
+        }
+
         this.trakt = new Trakt({
-            client_id: traktCredentials.clientId,
-            client_secret: traktCredentials.clientSecret,
+            client_id: appState.traktCredentials.clientId,
+            client_secret: appState.traktCredentials.clientSecret,
         });
 
-        this.trakt.import_token(traktCredentials.oAuth);
+        this.trakt.import_token(appState.traktCredentials.oAuth);
     }
 
     async updateStatus(): Promise<void> {
@@ -59,7 +63,7 @@ export class TraktInstance {
         const { movie } = watching;
         const detail = `${movie.title} (${movie.year})`;
 
-        await this.updateProgressBar(watching, detail, 'Movie');
+        await updateProgressBar(detail, watching.started_at, watching.expires_at, 'Movie');
         await appState.rpc?.user?.setActivity({ ...traktContent, details: detail });
     }
 
@@ -68,7 +72,7 @@ export class TraktInstance {
         const detail = show.title;
         const state = `S${episode.season}E${episode.number} (${episode.title})`;
 
-        await this.updateProgressBar(watching, `${detail} - ${state}`, 'TV Show');
+        await updateProgressBar(`${detail} - ${state}`, watching.started_at, watching.expires_at, 'TV Show');
         await appState.rpc?.user?.setActivity({ ...traktContent, details: detail, state });
     }
 
@@ -80,11 +84,6 @@ export class TraktInstance {
     private async handleUpdateFailure(): Promise<void> {
         updateInstanceState(ConnectionState.Disconnected);
         const discordRPC = new DiscordRPC();
-        await discordRPC.spawnRPC(this, appState.traktCredentials);
-    }
-
-    private async updateProgressBar(watching: Movie | TvShow, content: string, type: string): Promise<void> {
-        // TODO
-        await updateProgressBar();
+        await discordRPC.spawnRPC(this);
     }
 }
