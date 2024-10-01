@@ -1,7 +1,7 @@
 // @ts-expect-error [currently, no types file exists for trakt.tv, so this will cause an error]
 import Trakt from 'trakt.tv';
 import {
-    ConnectionState, Movie, TvShow, TraktContent,
+    ConnectionState, Movie, TvShow, TraktContent, TraktToken,
 } from '../types';
 import { updateProgressBar } from '../utils/progressBar.js';
 import { appState, updateInstanceState } from '../state/appState.js';
@@ -29,7 +29,7 @@ export class TraktInstance {
         return this.trakt.get_url();
     }
 
-    async exchangeCodeForToken(code: string): Promise<any> {
+    async exchangeCodeForToken(code: string): Promise<TraktToken> {
         try {
             await this.trakt.exchange_code(code);
             return this.trakt.export_token();
@@ -79,7 +79,7 @@ export class TraktInstance {
         const { movie } = watching;
         const detail = `${movie.title} (${movie.year})`;
 
-        await updateProgressBar(detail, watching.started_at, watching.expires_at, 'Movie');
+        updateProgressBar(detail, watching.started_at, watching.expires_at, 'Movie');
         await appState.rpc?.user?.setActivity({ ...traktContent, details: detail });
     }
 
@@ -88,12 +88,12 @@ export class TraktInstance {
         const detail = show.title;
         const state = `S${episode.season}E${episode.number} (${episode.title})`;
 
-        await updateProgressBar(`${detail} - ${state}`, watching.started_at, watching.expires_at, 'TV Show');
+        updateProgressBar(`${detail} - ${state}`, watching.started_at, watching.expires_at, 'TV Show');
         await appState.rpc?.user?.setActivity({ ...traktContent, details: detail, state });
     }
 
     private async handleNotPlaying(): Promise<void> {
-        await updateProgressBar();
+        updateProgressBar();
         await appState.rpc?.user?.clearActivity();
     }
 
