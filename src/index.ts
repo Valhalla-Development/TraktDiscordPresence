@@ -2,10 +2,10 @@ import { existsSync, readFileSync, writeFileSync } from 'fs';
 import Enquirer from 'enquirer';
 import chalk from 'chalk';
 import { Configuration } from './types';
-import { TraktInstance } from './services/traktInstance';
-import { DiscordRPC } from './services/discordRPC';
-import { updateTraktCredentials } from './state/appState';
-import { updateProgressBar } from './utils/progressBar';
+import { TraktInstance } from './services/traktInstance.js';
+import { DiscordRPC } from './services/discordRPC.js';
+import { updateTraktCredentials } from './state/appState.js';
+import { updateProgressBar } from './utils/progressBar.js';
 
 const { prompt } = Enquirer;
 

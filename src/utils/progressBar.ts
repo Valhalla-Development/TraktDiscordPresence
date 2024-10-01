@@ -2,7 +2,7 @@ import { SingleBar, Options, Params } from 'cli-progress';
 import chalk from 'chalk';
 import { DateTime } from 'luxon';
 import { ConnectionState } from '../types';
-import { appState } from '../state/appState';
+import { appState } from '../state/appState.js';
 
 let progressBar: SingleBar | null = null;
 

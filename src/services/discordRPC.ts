@@ -1,10 +1,10 @@
 import { Client } from '@xhayper/discord-rpc';
 import { ConnectionState } from '../types';
-import { TraktInstance } from './traktInstance';
-import { updateProgressBar } from '../utils/progressBar';
+import { TraktInstance } from './traktInstance.js';
+import { updateProgressBar } from '../utils/progressBar.js';
 import {
     appState, updateInstanceState, updateRPC, updateRetryInterval, updateCountdownTimer,
-} from '../state/appState';
+} from '../state/appState.js';
 
 export class DiscordRPC {
     private statusInterval: NodeJS.Timeout | null = null;

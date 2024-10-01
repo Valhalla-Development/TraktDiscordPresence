@@ -3,9 +3,9 @@ import Trakt from 'trakt.tv';
 import {
     ConnectionState, Movie, TvShow, TraktContent,
 } from '../types';
-import { updateProgressBar } from '../utils/progressBar';
-import { appState, updateInstanceState, updateTraktCredentials } from '../state/appState';
-import { DiscordRPC } from './discordRPC';
+import { updateProgressBar } from '../utils/progressBar.js';
+import { appState, updateInstanceState, updateTraktCredentials } from '../state/appState.js';
+import { DiscordRPC } from './discordRPC.js';
 
 export class TraktInstance {
     private trakt: Trakt;
