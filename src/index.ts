@@ -15,13 +15,13 @@ async function fetchTraktCredentials(): Promise<Configuration> {
         return JSON.parse(configData);
     } catch (error) {
         console.error('Error fetching Trakt credentials:', error);
-        process.exit(1);
+        throw error;
     }
 }
 
 async function generateTraktCredentials(): Promise<Configuration> {
     console.log(chalk.yellow('Please follow the instructions on the screen to authenticate your account.'));
-    console.log(chalk.red.italic('IMPORTANT: Keep your login credentials private and do not share them. They will be stored in a `config.json` file.'));
+    console.log(chalk.red.italic('IMPORTANT: Keep your login credentials private and do not share them. They will be stored in a `config.json` file.\n'));
 
     return prompt([
         {
@@ -43,55 +43,81 @@ async function generateTraktCredentials(): Promise<Configuration> {
 }
 
 async function authoriseTrakt(config: Configuration): Promise<void> {
+    updateTraktCredentials(config);
     const traktInstance = new TraktInstance();
     await traktInstance.createTrakt();
 
-    console.log(chalk.green('Trakt instance created successfully.'));
+    console.log(chalk.green('\nTrakt instance created successfully.'));
     console.log(chalk.yellow('Please authorize the application in your browser.'));
 
-    const auth = await prompt<{ oAuth: string }>({
+    const authUrl = await traktInstance.getAuthorizationUrl();
+    console.log(chalk.blue('\nPlease visit this URL to authorize:'));
+    console.log(chalk.blue.underline(authUrl));
+
+    const auth = await prompt<{ code: string }>({
         type: 'input',
-        name: 'oAuth',
+        name: 'code',
         message: 'Please paste the received code here:',
     });
 
-    config.oAuth = auth.oAuth;
+    try {
+        const token = await traktInstance.exchangeCodeForToken(auth.code);
+        config.oAuth = JSON.stringify(token);
+        updateTraktCredentials(config);
+        writeFileSync('./config.json', JSON.stringify(config, null, 2));
+        console.log(chalk.green('\nConfiguration saved successfully.'));
+    } catch (error) {
+        console.error(chalk.red('\nFailed to exchange code for token:'), error);
+        throw error;
+    }
+}
 
-    writeFileSync('./config.json', JSON.stringify(config, null, 2));
-    console.log(chalk.green('Configuration saved successfully.'));
+async function ensureAuthentication(): Promise<Configuration> {
+    let config: Configuration;
+
+    if (!existsSync('./config.json')) {
+        config = await generateTraktCredentials();
+        await authoriseTrakt(config);
+    } else {
+        try {
+            config = await fetchTraktCredentials();
+            updateTraktCredentials(config);
+        } catch (error) {
+            console.error(chalk.red('Failed to read existing configuration. Generating new credentials.'));
+            config = await generateTraktCredentials();
+            await authoriseTrakt(config);
+        }
+    }
+
+    return config;
+}
+
+async function startApplication(config: Configuration): Promise<void> {
+    console.log(chalk.cyan('\nInitializing application...'));
+
+    const traktInstance = new TraktInstance();
+    await traktInstance.createTrakt();
+
+    console.log(chalk.cyan('Connecting to Discord...'));
+    updateProgressBar();
+
+    const discordRPC = new DiscordRPC();
+    await discordRPC.spawnRPC(traktInstance);
+
+    console.log(chalk.green('\nApplication started successfully.'));
+    console.log(chalk.yellow('You can now start using Trakt. Your Discord status will update automatically.\n'));
 }
 
 async function main(): Promise<void> {
     try {
-        let config: Configuration;
-
-        if (!existsSync('./config.json')) {
-            config = await generateTraktCredentials();
-            await authoriseTrakt(config);
-        } else {
-            config = await fetchTraktCredentials();
-        }
-
-        updateTraktCredentials(config);
-
-        const traktInstance = new TraktInstance();
-        await traktInstance.createTrakt();
-
-        const discordRPC = new DiscordRPC();
-        await discordRPC.spawnRPC(traktInstance);
-
-        console.log(chalk.green('Application started successfully.'));
-
-        // Keep the process running
-        setInterval(() => {}, 1000);
+        console.log(chalk.bold.magenta('\n=== Trakt Discord RPC ===\n'));
+        const config = await ensureAuthentication();
+        await startApplication(config);
     } catch (error) {
-        console.error(chalk.red(`An error occurred: ${error}`));
+        console.error(chalk.red(`\nAn error occurred: ${error}`));
         process.exit(1);
     }
 }
-
-// Initialize progress bar
-updateProgressBar();
 
 // Start the application
 main().catch(console.error);
