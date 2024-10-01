@@ -83,7 +83,7 @@ async function ensureAuthentication(): Promise<Configuration> {
             config = await fetchTraktCredentials();
             updateTraktCredentials(config);
         } catch (error) {
-            console.error(chalk.red('Failed to read existing configuration. Generating new credentials.'));
+            console.error(chalk.red('Failed to read existing configuration. Generating new credentials.', error));
             config = await generateTraktCredentials();
             await authoriseTrakt(config);
         }
@@ -93,26 +93,15 @@ async function ensureAuthentication(): Promise<Configuration> {
 }
 
 async function startApplication(config: Configuration): Promise<void> {
-    console.log(chalk.cyan('\nInitializing application...'));
-
     const traktInstance = new TraktInstance();
     await traktInstance.createTrakt();
 
-    console.log(chalk.cyan('Connecting to Discord...'));
-
     const discordRPC = new DiscordRPC();
     await discordRPC.spawnRPC(traktInstance);
-
-    console.log(chalk.green('\nApplication started successfully.'));
-    console.log(chalk.yellow('You can now start using Trakt. Your Discord status will update automatically.\n'));
-
-    // Initialize the progress bar after all console logs
-    initializeProgressBar();
 }
 
 async function main(): Promise<void> {
     try {
-        console.log(chalk.bold.magenta('\n=== Trakt Discord RPC ===\n'));
         const config = await ensureAuthentication();
         await startApplication(config);
     } catch (error) {
