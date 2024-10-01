@@ -17,17 +17,19 @@ export function generateProgressBar(): SingleBar {
     const formatFunction = (options: Options, params: Params, payload: ProgressBarPayload) => {
         switch (appState.instanceState) {
         case ConnectionState.Connecting:
-            return chalk.magenta.bold('🔒 Connecting to Discord...');
+            return chalk.yellow('🔄 Initializing application...');
         case ConnectionState.Connected:
-            return chalk.green.bold('🎉 Connected to Discord!');
+            return chalk.green('✅ Application started successfully. Waiting for Trakt activity...');
         case ConnectionState.Playing:
             return formatPlayingState(options, params, payload);
         case ConnectionState.NotPlaying:
-            return chalk.bold(`📅 ${chalk.green.italic(formatDate())} ${chalk.magenta('|')} ${chalk.red('Trakt:')} Not playing.`);
+            return chalk.blue(`📅 ${chalk.green.italic(formatDate())} ${chalk.magenta('|')} ${chalk.red('Trakt:')} Not playing.`);
         case ConnectionState.Disconnected:
-            return chalk.red.bold(`⚠️ Discord connection lost. Retrying in ${chalk.blue(appState.countdownTimer.toString())} seconds...`);
+            return chalk.red(`⚠️ Discord connection lost. Retrying in ${chalk.blue(appState.countdownTimer.toString())} seconds...`);
+        case ConnectionState.Error:
+            return chalk.red(`❌ Error: ${payload.error}`);
         default:
-            return chalk.bold(`📅 ${chalk.green.italic(formatDate())} ${chalk.magenta('|')} ${chalk.red('Trakt:')} Not playing.`);
+            return chalk.blue(`📅 ${chalk.green.italic(formatDate())} ${chalk.magenta('|')} ${chalk.red('Trakt:')} Not playing.`);
         }
     };
 
@@ -36,32 +38,27 @@ export function generateProgressBar(): SingleBar {
         barCompleteChar: '█',
         barIncompleteChar: '░',
         hideCursor: true,
-        clearOnComplete: true,
+        clearOnComplete: false,
         linewrap: true,
         fps: 1,
         forceRedraw: true,
     });
 }
 
-export function updateProgressBar(content?: string, startedAt?: string, endsAt?: string, type?: string): void {
+export function updateProgressBar(payload?: ProgressBarPayload): void {
     if (!progressBar) {
         progressBar = generateProgressBar();
     }
 
-    if (appState.instanceState === ConnectionState.Playing && content && startedAt && endsAt && type) {
-        const totalDuration = DateTime.fromISO(endsAt).diff(DateTime.fromISO(startedAt), 'seconds').seconds;
-        const elapsedDuration = DateTime.local().diff(DateTime.fromISO(startedAt), 'seconds').seconds;
+    if (appState.instanceState === ConnectionState.Playing && payload?.content && payload?.startedAt && payload?.endsAt && payload?.type) {
+        const totalDuration = DateTime.fromISO(payload.endsAt).diff(DateTime.fromISO(payload.startedAt), 'seconds').seconds;
+        const elapsedDuration = DateTime.local().diff(DateTime.fromISO(payload.startedAt), 'seconds').seconds;
 
-        progressBar.start(totalDuration, elapsedDuration, {
-            content,
-            startedAt,
-            endsAt,
-            type,
-        });
-
+        progressBar.start(totalDuration, elapsedDuration, payload);
         progressBar.update(elapsedDuration);
     } else {
-        progressBar.start(0, 0);
+        progressBar.start(100, 0, payload);
+        progressBar.update(0);
     }
 }
 
