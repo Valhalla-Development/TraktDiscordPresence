@@ -7,12 +7,12 @@ import {
 } from '../state/appState.js';
 
 export class DiscordRPC {
-    private statusInterval: NodeJS.Timeout | null = null;
-
     async spawnRPC(trakt: TraktInstance): Promise<void> {
         try {
             if (!appState.traktCredentials) {
-                throw new Error('Trakt credentials not found');
+                console.error('Trakt credentials not found');
+                updateInstanceState(ConnectionState.Disconnected);
+                return;
             }
 
             const rpc = new Client({
@@ -35,7 +35,8 @@ export class DiscordRPC {
 
             await trakt.updateStatus();
 
-            this.statusInterval = setInterval(() => trakt.updateStatus(), 15000);
+            // Set up interval for updating status
+            setInterval(() => trakt.updateStatus(), 15000);
         } catch (err) {
             console.error('Failed to connect to Discord:', err);
             await this.handleConnectionFailure(trakt);
@@ -53,7 +54,6 @@ export class DiscordRPC {
         const newInterval = setInterval(() => {
             if (appState.countdownTimer > 0 && appState.instanceState === ConnectionState.Disconnected) {
                 updateCountdownTimer(appState.countdownTimer - 1);
-                updateProgressBar();
             }
         }, 1000);
         updateRetryInterval(newInterval);
