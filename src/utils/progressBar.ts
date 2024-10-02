@@ -27,7 +27,7 @@ export function generateProgressBar(): SingleBar {
         case ConnectionState.Disconnected:
             return chalk.red(`⚠️ Discord connection lost. Retrying in ${chalk.blue(appState.countdownTimer.toString())} seconds...`);
         case ConnectionState.Error:
-            return chalk.red(`❌ Error: ${payload.error}`);
+            return chalk.red(`❌ Error: ${payload.error} Retrying in ${chalk.blue(appState.countdownTimer.toString())} seconds...`);
         default:
             return chalk.blue(`📅 ${chalk.green.italic(formatDate())} ${chalk.magenta('|')} ${chalk.red('Trakt:')} Not playing.`);
         }
