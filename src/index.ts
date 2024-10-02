@@ -4,7 +4,7 @@ import chalk from 'chalk';
 import { Configuration, ConnectionState } from './types';
 import { TraktInstance } from './services/traktInstance.js';
 import { DiscordRPC } from './services/discordRPC.js';
-import { updateTraktCredentials, updateInstanceState } from './state/appState.js';
+import { updateTraktCredentials, updateInstanceState, appState } from './state/appState.js';
 import { initializeProgressBar } from './utils/progressBar.js';
 
 const { prompt } = Enquirer;
@@ -101,12 +101,32 @@ async function startApplication(): Promise<void> {
     await discordRPC.spawnRPC(traktInstance);
 }
 
+function cleanup() {
+    if (appState.retryInterval) {
+        clearInterval(appState.retryInterval);
+    }
+    if (appState.rpc) {
+        appState.rpc.destroy();
+    }
+}
+
+process.on('SIGINT', () => {
+    cleanup();
+    process.exit();
+});
+
+process.on('SIGTERM', () => {
+    cleanup();
+    process.exit();
+});
+
 async function main(): Promise<void> {
     try {
         await ensureAuthentication();
         await startApplication();
     } catch (error) {
         console.error(chalk.red(`\nAn error occurred: ${error}`));
+        cleanup();
         process.exit(1);
     }
 }
