@@ -44,21 +44,30 @@ export class DiscordRPC {
     }
 
     private async handleConnectionFailure(trakt: TraktInstance): Promise<void> {
-        updateInstanceState(ConnectionState.Disconnected);
-        updateProgressBar();
+        const isDisconnected = appState.instanceState === ConnectionState.Disconnected;
+        const isError = appState.instanceState === ConnectionState.Error;
 
-        updateCountdownTimer(15);
-        if (appState.retryInterval) {
-            clearInterval(appState.retryInterval);
-        }
-        const newInterval = setInterval(() => {
-            if (appState.countdownTimer > 0 && appState.instanceState === ConnectionState.Disconnected) {
-                updateCountdownTimer(appState.countdownTimer - 1);
-                updateProgressBar();
+        if (isDisconnected || isError) {
+            updateCountdownTimer(15);
+            if (appState.retryInterval) {
+                clearInterval(appState.retryInterval);
             }
-        }, 1000);
-        updateRetryInterval(newInterval);
+            const newInterval = setInterval(() => {
+                if (appState.countdownTimer > 0 && (isDisconnected || isError)) {
+                    updateCountdownTimer(appState.countdownTimer - 1);
+                    updateProgressBar();
+                }
+            }, 1000);
+            updateRetryInterval(newInterval);
 
-        setTimeout(() => this.spawnRPC(trakt), 15000);
+            setTimeout(() => this.spawnRPC(trakt), 15000);
+        }
+
+        if (isDisconnected) {
+            updateInstanceState(ConnectionState.Disconnected);
+        } else if (isError) {
+            updateInstanceState(ConnectionState.Error);
+        }
+        updateProgressBar();
     }
 }
