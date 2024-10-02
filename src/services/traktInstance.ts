@@ -4,7 +4,7 @@ import {
     ConnectionState, Movie, TvShow, TraktContent, TraktToken,
 } from '../types';
 import { updateProgressBar } from '../utils/progressBar.js';
-import { appState, updateInstanceState } from '../state/appState.js';
+import { appState, updateInstanceState, updateRetryInterval } from '../state/appState.js';
 import { DiscordRPC } from './discordRPC.js';
 
 export class TraktInstance {
@@ -50,6 +50,10 @@ export class TraktInstance {
             if (!appState.rpc || !appState.rpc.transport.isConnected) {
                 updateInstanceState(ConnectionState.Disconnected);
                 updateProgressBar({ error: 'Discord RPC not connected. Attempting to reconnect...' });
+                if (appState.retryInterval) {
+                    clearInterval(appState.retryInterval);
+                    updateRetryInterval(null);
+                }
                 await this.discordRPC.spawnRPC(this);
                 return;
             }
@@ -67,6 +71,10 @@ export class TraktInstance {
         } catch (error) {
             updateInstanceState(ConnectionState.Error);
             updateProgressBar({ error: `Failed to update status: ${error}` });
+            if (appState.retryInterval) {
+                clearInterval(appState.retryInterval);
+                updateRetryInterval(null);
+            }
             await this.handleUpdateFailure();
         }
     }
