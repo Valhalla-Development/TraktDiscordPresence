@@ -1,8 +1,8 @@
 {
   "name": "traktdiscordpresence",
-  "version": "2.0.60",
+  "version": "3.0.0",
   "description": "Set your Discord presence according to what you are watching on Trakt.tv",
-  "license": "MIT",
+  "license": "GPL-3.0-or-later",
   "author": "Ragnar Lothbrok <ragnarlothbrokjr@proton.me>",
   "homepage": "https://github.com/Valhalla-Development/TraktDiscordPresence#readme",
   "repository": "https://github.com/RagnarLothbrok-Odin/TraktDiscordPresence.git",
