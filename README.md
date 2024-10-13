@@ -5,12 +5,12 @@
 
   <p>
     <a href="https://discord.gg/Q3ZhdRJ"><img src="https://img.shields.io/discord/495602800802398212.svg?colorB=5865F2&logo=discord&logoColor=white&style=for-the-badge" alt="Discord"></a>
-    <a href="https://github.com/RagnarLothbrok-Odin/TraktDiscordPresence/stargazers"><img src="https://img.shields.io/github/stars/RagnarLothbrok-Odin/TraktDiscordPresence.svg?style=for-the-badge&color=yellow" alt="Stars"></a>
-    <a href="https://github.com/RagnarLothbrok-Odin/TraktDiscordPresence/network/members"><img src="https://img.shields.io/github/forks/RagnarLothbrok-Odin/TraktDiscordPresence.svg?style=for-the-badge&color=orange" alt="Forks"></a>
-    <a href="https://github.com/RagnarLothbrok-Odin/TraktDiscordPresence/issues"><img src="https://img.shields.io/github/issues/RagnarLothbrok-Odin/TraktDiscordPresence.svg?style=for-the-badge&color=red" alt="Issues"></a>
-    <a href="https://github.com/RagnarLothbrok-Odin/TraktDiscordPresence/blob/main/LICENSE"><img src="https://img.shields.io/github/license/RagnarLothbrok-Odin/TraktDiscordPresence.svg?style=for-the-badge&color=blue" alt="License"></a>
+    <a href="https://github.com/Valhalla-Development/TraktDiscordPresence/stargazers"><img src="https://img.shields.io/github/stars/Valhalla-Development/TraktDiscordPresence.svg?style=for-the-badge&color=yellow" alt="Stars"></a>
+    <a href="https://github.com/Valhalla-Development/TraktDiscordPresence/network/members"><img src="https://img.shields.io/github/forks/Valhalla-Development/TraktDiscordPresence.svg?style=for-the-badge&color=orange" alt="Forks"></a>
+    <a href="https://github.com/Valhalla-Development/TraktDiscordPresence/issues"><img src="https://img.shields.io/github/issues/Valhalla-Development/TraktDiscordPresence.svg?style=for-the-badge&color=red" alt="Issues"></a>
+    <a href="https://github.com/Valhalla-Development/TraktDiscordPresence/blob/main/LICENSE"><img src="https://img.shields.io/github/license/Valhalla-Development/TraktDiscordPresence.svg?style=for-the-badge&color=blue" alt="License"></a>
     <br>
-    <a href="https://app.codacy.com/gh/RagnarLothbrok-Odin/TraktDiscordPresence/dashboard"><img src="https://img.shields.io/codacy/grade/eb4d99a79b5c4151a7431b1cb1057e1b?style=for-the-badge&color=brightgreen" alt="Codacy"></a>
+    <a href="https://app.codacy.com/gh/Valhalla-Development/TraktDiscordPresence/dashboard"><img src="https://img.shields.io/codacy/grade/eb4d99a79b5c4151a7431b1cb1057e1b?style=for-the-badge&color=brightgreen" alt="Codacy"></a>
     <a href="#"><img src="https://img.shields.io/badge/Powered%20by-Trakt-ED1C24?style=for-the-badge&logo=trakt&logoColor=white" alt="Powered by Trakt"></a>
     <a href="#"><img src="https://img.shields.io/badge/Made%20with-TypeScript-3178C6?style=for-the-badge&logo=typescript&logoColor=white" alt="Made with TypeScript"></a>
   </p>
@@ -57,7 +57,7 @@ TraktDiscordPresence is the missing link between your Trakt.tv account and Disco
 
 ## 🛠️ Installation & Setup
 
-1. [Download](https://github.com/RagnarLothbrok-Odin/TraktDiscordPresence/releases) the latest release.
+1. [Download](https://github.com/Valhalla-Development/TraktDiscordPresence/releases) the latest release.
 
 2. Extract and move the files to your desired location.
 
@@ -154,9 +154,9 @@ Got questions? Want to debate the best TV shows? Join our [Discord server](https
 
 <div align="center">
 
-💻 Crafted with ❤️ (and many snacks) by [RagnarLothbrok-Odin](https://github.com/RagnarLothbrok-Odin)
+💻 Crafted with ❤️ (and many snacks) by [Valhalla-Development](https://github.com/Valhalla-Development)
 
-[🐛 Spotted an issue?](https://github.com/RagnarLothbrok-Odin/TraktDiscordPresence/issues/new?assignees=&labels=bug&projects=&template=bug_report.yml&title=%5BBUG%5D+Short+Description) | [💡 Got an idea?](https://github.com/RagnarLothbrok-Odin/TraktDiscordPresence/issues/new?assignees=&labels=enhancement&projects=&template=feature_request.yml&title=%5BFeature%5D+Short+Description) | [🤔 Need a viewing guide?](https://discord.gg/Q3ZhdRJ)
+[🐛 Spotted an issue?](https://github.com/Valhalla-Development/TraktDiscordPresence/issues/new?assignees=&labels=bug&projects=&template=bug_report.yml&title=%5BBUG%5D+Short+Description) | [💡 Got an idea?](https://github.com/Valhalla-Development/TraktDiscordPresence/issues/new?assignees=&labels=enhancement&projects=&template=feature_request.yml&title=%5BFeature%5D+Short+Description) | [🤔 Need a viewing guide?](https://discord.gg/Q3ZhdRJ)
 
 <a href="#top">🔝 Back to Top (Time for a Snack Break)</a>
 </div>
