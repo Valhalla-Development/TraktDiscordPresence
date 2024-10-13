@@ -1,5 +1,5 @@
 <div align="center">
-  <img src="https://share.valhalladev.org/u/TraktDiscordPresence.png" width="100%" alt="TraktDiscordPresence Banner">
+  <img id="top" src="https://share.valhalladev.org/u/TraktDiscordPresence.png" width="100%" alt="TraktDiscordPresence Banner">
 
 # 🎬 TraktDiscordPresence: Your Binge-Watching Broadcaster! 🎭
 
