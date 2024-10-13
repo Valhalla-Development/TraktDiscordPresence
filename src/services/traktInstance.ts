@@ -67,6 +67,9 @@ export class TraktInstance {
             } else {
                 updateInstanceState(ConnectionState.NotPlaying);
                 updateProgressBar();
+
+                // Clear the Discord activity when nothing is playing
+                await appState.rpc?.user?.clearActivity();
             }
         } catch (error) {
             updateInstanceState(ConnectionState.Error);
