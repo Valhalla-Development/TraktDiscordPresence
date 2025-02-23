@@ -10,7 +10,7 @@
     <a href="https://github.com/Valhalla-Development/TraktDiscordPresence/issues"><img src="https://img.shields.io/github/issues/Valhalla-Development/TraktDiscordPresence.svg?style=for-the-badge&color=red" alt="Issues"></a>
     <a href="https://github.com/Valhalla-Development/TraktDiscordPresence/blob/main/LICENSE"><img src="https://img.shields.io/github/license/Valhalla-Development/TraktDiscordPresence.svg?style=for-the-badge&color=blue" alt="License"></a>
     <br>
-    <a href="https://app.codacy.com/gh/Valhalla-Development/TraktDiscordPresence/dashboard"><img src="https://img.shields.io/codacy/grade/eb4d99a79b5c4151a7431b1cb1057e1b?style=for-the-badge&color=brightgreen" alt="Codacy"></a>
+    <a href="https://app.codacy.com/gh/Valhalla-Development/TraktDiscordPresence/dashboard"><img src="https://img.shields.io/codacy/grade/eac94fd0150b41fe924e66cd2d2a41b9?style=for-the-badge&color=brightgreen" alt="Codacy"></a>
     <a href="#"><img src="https://img.shields.io/badge/Powered%20by-Trakt-ED1C24?style=for-the-badge&logo=trakt&logoColor=white" alt="Powered by Trakt"></a>
     <a href="#"><img src="https://img.shields.io/badge/Made%20with-TypeScript-3178C6?style=for-the-badge&logo=typescript&logoColor=white" alt="Made with TypeScript"></a>
   </p>
