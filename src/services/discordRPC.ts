@@ -1,10 +1,14 @@
 import { Client } from '@xhayper/discord-rpc';
-import { ConnectionState } from '../types';
-import { TraktInstance } from './traktInstance.js';
-import { updateProgressBar } from '../utils/progressBar.js';
 import {
-    appState, updateInstanceState, updateRPC, updateRetryInterval, updateCountdownTimer,
-} from '../state/appState.js';
+    appState,
+    updateCountdownTimer,
+    updateInstanceState,
+    updateRPC,
+    updateRetryInterval,
+} from '../state/appState.ts';
+import { ConnectionState } from '../types/index.d';
+import { updateProgressBar } from '../utils/progressBar.ts';
+import type { TraktInstance } from './traktInstance.ts';
 
 export class DiscordRPC {
     async spawnRPC(trakt: TraktInstance): Promise<void> {
@@ -20,7 +24,7 @@ export class DiscordRPC {
                 transport: { type: 'ipc' },
             });
 
-            rpc.on('ready', async () => {
+            rpc.on('ready', () => {
                 updateInstanceState(ConnectionState.Connected);
                 updateProgressBar();
             });

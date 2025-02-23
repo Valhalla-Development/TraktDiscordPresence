@@ -1,11 +1,15 @@
 // @ts-expect-error [currently, no types file exists for trakt.tv, so this will cause an error]
 import Trakt from 'trakt.tv';
+import { appState, updateInstanceState, updateRetryInterval } from '../state/appState.ts';
 import {
-    ConnectionState, Movie, TvShow, TraktContent, TraktToken,
-} from '../types';
-import { updateProgressBar } from '../utils/progressBar.js';
-import { appState, updateInstanceState, updateRetryInterval } from '../state/appState.js';
-import { DiscordRPC } from './discordRPC.js';
+    ConnectionState,
+    type Movie,
+    type TraktContent,
+    type TraktToken,
+    type TvShow,
+} from '../types/index.d';
+import { updateProgressBar } from '../utils/progressBar.ts';
+import { DiscordRPC } from './discordRPC.ts';
 
 export class TraktInstance {
     private trakt: Trakt;
@@ -16,7 +20,7 @@ export class TraktInstance {
         this.discordRPC = new DiscordRPC();
     }
 
-    async createTrakt(): Promise<void> {
+    createTrakt(): Promise<void> {
         if (!appState.traktCredentials) {
             throw new Error('Trakt credentials not found');
         }
@@ -27,11 +31,13 @@ export class TraktInstance {
         });
 
         if (appState.traktCredentials.oAuth) {
-            this.trakt.import_token(JSON.parse(appState.traktCredentials.oAuth));
+            return this.trakt.import_token(JSON.parse(appState.traktCredentials.oAuth));
         }
+
+        return Promise.resolve();
     }
 
-    async getAuthorizationUrl(): Promise<string> {
+    getAuthorizationUrl(): Promise<string> {
         return this.trakt.get_url();
     }
 
@@ -49,7 +55,9 @@ export class TraktInstance {
         try {
             if (!appState.rpc || !appState.rpc.transport.isConnected) {
                 updateInstanceState(ConnectionState.Disconnected);
-                updateProgressBar({ error: 'Discord RPC not connected. Attempting to reconnect...' });
+                updateProgressBar({
+                    error: 'Discord RPC not connected. Attempting to reconnect...',
+                });
                 if (appState.retryInterval) {
                     clearInterval(appState.retryInterval);
                     updateRetryInterval(null);

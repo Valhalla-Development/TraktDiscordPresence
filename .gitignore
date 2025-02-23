@@ -18,16 +18,15 @@ build/
 
 # JetBrains IDEs (e.g., WebStorm, IntelliJ)
 .idea/
+.vscode/
 
 # ========================
 # Dependency management
 # ========================
 
-# Yarn: lock file and error log
-yarn-error.log
-.yarn/
-.pnp.cjs
-.pnp.loader.mjs
+# Node related files
+node_modules/
+
 
 # ========================
 # Config file

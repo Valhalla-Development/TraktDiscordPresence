@@ -1,5 +1,5 @@
-import { Client } from '@xhayper/discord-rpc';
-import { ConnectionState, Configuration } from '../types';
+import type { Client } from '@xhayper/discord-rpc';
+import { type Configuration, ConnectionState } from '../types/index.d';
 
 export interface AppState {
     instanceState: ConnectionState;

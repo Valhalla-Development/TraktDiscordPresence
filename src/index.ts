@@ -1,15 +1,15 @@
-import { existsSync, readFileSync, writeFileSync } from 'fs';
-import Enquirer from 'enquirer';
+import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import chalk from 'chalk';
-import { Configuration, ConnectionState } from './types';
-import { TraktInstance } from './services/traktInstance.js';
-import { DiscordRPC } from './services/discordRPC.js';
-import { updateTraktCredentials, updateInstanceState, appState } from './state/appState.js';
+import Enquirer from 'enquirer';
+import { DiscordRPC } from './services/discordRPC.ts';
+import { TraktInstance } from './services/traktInstance.ts';
+import { appState, updateInstanceState, updateTraktCredentials } from './state/appState.js';
+import { type Configuration, ConnectionState } from './types/index.d';
 import { initializeProgressBar } from './utils/progressBar.js';
 
 const { prompt } = Enquirer;
 
-async function fetchTraktCredentials(): Promise<Configuration> {
+function fetchTraktCredentials(): Promise<Configuration> {
     try {
         const configData = readFileSync('./config.json', 'utf8');
         return JSON.parse(configData);
@@ -19,9 +19,15 @@ async function fetchTraktCredentials(): Promise<Configuration> {
     }
 }
 
-async function generateTraktCredentials(): Promise<Configuration> {
-    console.log(chalk.yellow('Please follow the instructions on the screen to authenticate your account.'));
-    console.log(chalk.red.italic('IMPORTANT: Keep your login credentials private and do not share them. They will be stored in a `config.json` file.\n'));
+function generateTraktCredentials(): Promise<Configuration> {
+    console.log(
+        chalk.yellow('Please follow the instructions on the screen to authenticate your account.')
+    );
+    console.log(
+        chalk.red.italic(
+            'IMPORTANT: Keep your login credentials private and do not share them. They will be stored in a `config.json` file.\n'
+        )
+    );
 
     return prompt([
         {
@@ -75,18 +81,20 @@ async function authoriseTrakt(config: Configuration): Promise<void> {
 }
 
 async function ensureAuthentication(): Promise<void> {
-    if (!existsSync('./config.json')) {
-        const config = await generateTraktCredentials();
-        await authoriseTrakt(config);
-    } else {
+    if (existsSync('./config.json')) {
         try {
             const config = await fetchTraktCredentials();
             updateTraktCredentials(config);
         } catch {
-            console.error(chalk.red('Failed to read existing configuration. Generating new credentials.'));
+            console.error(
+                chalk.red('Failed to read existing configuration. Generating new credentials.')
+            );
             const config = await generateTraktCredentials();
             await authoriseTrakt(config);
         }
+    } else {
+        const config = await generateTraktCredentials();
+        await authoriseTrakt(config);
     }
 }
 
