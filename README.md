@@ -50,8 +50,7 @@ TraktDiscordPresence is the missing link between your Trakt.tv account and Disco
 
 ## 🚀 Requirements
 
-- [Node.js](https://nodejs.org/)
-- [Yarn](https://yarnpkg.com/)
+- [Bun](https://bun.sh/)
 - [Trakt.tv](https://trakt.tv/) account
 - [Discord](https://discord.com/) account
 
@@ -61,23 +60,24 @@ TraktDiscordPresence is the missing link between your Trakt.tv account and Disco
 
 2. Extract and move the files to your desired location.
 
-3. [Install Node.js](https://nodejs.org/) (LTS version recommended).
+3. Install Bun:
+   - Mac/Linux:
+     ```bash
+     curl -fsSL https://bun.sh/install | bash
+     ```
+   - Windows:
+     ```powershell
+     powershell -c "irm bun.sh/install.ps1 | iex"
+     ```
 
-4. Ensure `Node` is added to your system's PATH.
-
-5. Install Yarn globally:
-    ```bash
-    npm install --global yarn
-    ```
-
-6. Navigate to your project folder:
+4. Navigate to your project folder:
     ```bash
     cd /path/to/your/extracted/source
     ```
 
-7. Install dependencies:
+5. Install dependencies:
     ```bash
-    yarn install
+    bun install
     ```
 
 ## ⚙️ App Configuration
@@ -95,14 +95,14 @@ TraktDiscordPresence is the missing link between your Trakt.tv account and Disco
 
 1. Start the application:
    ```bash
-   yarn start
+   bun start
    ```
 
 2. When prompted, enter your Trakt Client ID, Trakt Client Secret, and Discord Client ID.
 
 3. Follow the provided URL to authorize your Trakt account. Grant access and enter the received code in the terminal.
 
-4. After initial setup, run `yarn start` again to launch the program.
+4. After initial setup, run `bun start` again to launch the program.
 
 Upon successful setup, your console output should resemble this:
 
