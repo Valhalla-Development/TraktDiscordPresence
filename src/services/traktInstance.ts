@@ -1,6 +1,11 @@
 // @ts-expect-error [currently, no types file exists for trakt.tv, so this will cause an error]
 import Trakt from 'trakt.tv';
-import { appState, updateInstanceState, updateRetryInterval } from '../state/appState.ts';
+import {
+    appState,
+    updateInstanceState,
+    updateLastErrorMessage,
+    updateRetryInterval,
+} from '../state/appState.ts';
 import {
     ConnectionState,
     type Movie,
@@ -55,8 +60,11 @@ export class TraktInstance {
         try {
             if (!appState.rpc || !appState.rpc.transport.isConnected) {
                 updateInstanceState(ConnectionState.Disconnected);
+                const errorMsg =
+                    'Discord is not running or RPC connection was lost. Attempting to reconnect...';
+                updateLastErrorMessage(errorMsg);
                 updateProgressBar({
-                    error: 'Discord RPC not connected. Attempting to reconnect...',
+                    error: errorMsg,
                 });
                 if (appState.retryInterval) {
                     clearInterval(appState.retryInterval);
@@ -81,7 +89,9 @@ export class TraktInstance {
             }
         } catch (error) {
             updateInstanceState(ConnectionState.Error);
-            updateProgressBar({ error: `Failed to update status: ${error}` });
+            const errorMsg = `Failed to update status: ${error}`;
+            updateLastErrorMessage(errorMsg);
+            updateProgressBar({ error: errorMsg });
             if (appState.retryInterval) {
                 clearInterval(appState.retryInterval);
                 updateRetryInterval(null);
