@@ -7,6 +7,7 @@ export interface AppState {
     retryInterval: NodeJS.Timeout | null;
     countdownTimer: number;
     traktCredentials: Configuration | null;
+    lastErrorMessage: string | null;
 }
 
 export const appState: AppState = {
@@ -15,6 +16,7 @@ export const appState: AppState = {
     retryInterval: null,
     countdownTimer: 15,
     traktCredentials: null,
+    lastErrorMessage: null,
 };
 
 export function updateInstanceState(newState: ConnectionState): void {
@@ -35,4 +37,8 @@ export function updateCountdownTimer(newTimer: number): void {
 
 export function updateTraktCredentials(newCredentials: Configuration | null): void {
     appState.traktCredentials = newCredentials;
+}
+
+export function updateLastErrorMessage(errorMessage: string | null): void {
+    appState.lastErrorMessage = errorMessage;
 }
