@@ -16,7 +16,7 @@ export class DiscordRPC {
         try {
             if (!appState.traktCredentials) {
                 updateInstanceState(ConnectionState.Error);
-                const errorMsg = 'Trakt credentials not found';
+                const errorMsg = 'Trakt credentials not found.';
                 updateLastErrorMessage(errorMsg);
                 updateProgressBar({ error: errorMsg });
                 return;
@@ -46,13 +46,7 @@ export class DiscordRPC {
             setInterval(() => trakt.updateStatus(), 15000);
         } catch (err) {
             updateInstanceState(ConnectionState.Error);
-            // Improve error handling to provide a more descriptive message when Discord is closed
-            const errorMessage =
-                err instanceof Error
-                    ? err.message
-                    : typeof err === 'string'
-                      ? err
-                      : 'Discord is not running or RPC connection failed';
+            const errorMessage = "Discord is not running or RPC connection failed."
 
             // Store the error message in the app state
             updateLastErrorMessage(errorMessage);
