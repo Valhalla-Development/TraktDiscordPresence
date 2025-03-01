@@ -32,10 +32,13 @@ export function generateProgressBar(): SingleBar {
                 return chalk.red(
                     `⚠️ Discord connection lost. Retrying in ${chalk.blue(appState.countdownTimer.toString())} seconds...`
                 );
-            case ConnectionState.Error:
+            case ConnectionState.Error: {
+                const errorMessage = payload?.error || appState.lastErrorMessage || 'Unknown error';
+
                 return chalk.red(
-                    `❌ Error: ${payload.error} Retrying in ${chalk.blue(appState.countdownTimer.toString())} seconds...`
+                    `❌ Error: ${errorMessage} Retrying in ${chalk.blue(appState.countdownTimer.toString())} seconds...`
                 );
+            }
             default:
                 return chalk.blue(
                     `📅 ${chalk.green.italic(formatDate())} ${chalk.magenta('|')} ${chalk.red('Trakt:')} Not playing.`
