@@ -89,7 +89,7 @@ export class TraktInstance {
             }
         } catch (error) {
             updateInstanceState(ConnectionState.Error);
-            const errorMsg = `Failed to update status: ${error}`;
+            const errorMsg = `Failed to update status: ${error}.`;
             updateLastErrorMessage(errorMsg);
             updateProgressBar({ error: errorMsg });
             if (appState.retryInterval) {
