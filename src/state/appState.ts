@@ -1,4 +1,5 @@
 import type { Client } from '@xhayper/discord-rpc';
+import type { TraktInstance } from '../services/traktInstance';
 import { type Configuration, ConnectionState } from '../types/index.d';
 
 export interface AppState {
@@ -8,6 +9,7 @@ export interface AppState {
     countdownTimer: number;
     traktCredentials: Configuration | null;
     lastErrorMessage: string | null;
+    traktInstance: TraktInstance | null;
 }
 
 export const appState: AppState = {
@@ -17,6 +19,7 @@ export const appState: AppState = {
     countdownTimer: 15,
     traktCredentials: null,
     lastErrorMessage: null,
+    traktInstance: null,
 };
 
 export function updateInstanceState(newState: ConnectionState): void {
@@ -37,6 +40,10 @@ export function updateCountdownTimer(newTimer: number): void {
 
 export function updateTraktCredentials(newCredentials: Configuration | null): void {
     appState.traktCredentials = newCredentials;
+}
+
+export function updateTraktInstance(instance: TraktInstance | null): void {
+    appState.traktInstance = instance;
 }
 
 export function updateLastErrorMessage(errorMessage: string | null): void {
