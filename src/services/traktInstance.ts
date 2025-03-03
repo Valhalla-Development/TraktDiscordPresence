@@ -1,3 +1,4 @@
+import chalk from 'chalk';
 // @ts-expect-error [currently, no types file exists for trakt.tv, so this will cause an error]
 import Trakt from 'trakt.tv';
 import {
@@ -42,17 +43,33 @@ export class TraktInstance {
         return Promise.resolve();
     }
 
-    getAuthorizationUrl(): Promise<string> {
-        return this.trakt.get_url();
+    async refreshToken(): Promise<TraktToken> {
+        try {
+            const newToken = await this.trakt.refresh_token();
+
+            await this.trakt.import_token(newToken);
+
+            return newToken;
+        } catch (error) {
+            console.error(chalk.red('Failed to refresh token:'), error);
+            throw error;
+        }
     }
 
-    async exchangeCodeForToken(code: string): Promise<TraktToken> {
+    async getDeviceAuthentication(): Promise<TraktToken> {
         try {
-            await this.trakt.exchange_code(code);
-            return this.trakt.export_token();
-        } catch (error) {
-            console.error('Failed to exchange code for token:', error);
-            throw error;
+            const pollData = await this.trakt.get_codes();
+
+            console.log(chalk.blue('\nTo authorize this application, please:'));
+            console.log(chalk.blue(`1. Visit: ${chalk.underline(pollData.verification_url)}`));
+            console.log(chalk.blue(`2. Enter code: ${chalk.bold(pollData.user_code)}`));
+            console.log(chalk.blue('\nWaiting for authorization...'));
+
+            const token = await this.trakt.poll_access(pollData);
+            console.log(chalk.green('\nAuthorization successful!'));
+            return token;
+        } catch {
+            throw new Error('Authorization timed out. Please try again.');
         }
     }
 
