@@ -1,6 +1,6 @@
 {
   "name": "traktdiscordpresence",
-  "version": "3.1.7",
+  "version": "3.2.0",
   "description": "Set your Discord presence according to what you are watching on Trakt.tv",
   "license": "GPL-3.0-or-later",
   "author": "Ragnar Lothbrok <ragnarlothbrokjr@proton.me>",
