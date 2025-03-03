@@ -23,7 +23,6 @@
     "chalk": "^5.4.1",
     "cli-progress": "^3.12.0",
     "colors": "^1.4.0",
-    "enquirer": "^2.4.1",
     "luxon": "^3.5.0",
     "pretty-ms": "^9.2.0",
     "trakt.tv": "^8.2.0"
