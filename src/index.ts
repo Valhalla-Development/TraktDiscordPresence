@@ -181,11 +181,13 @@ function cleanup() {
 
 process.on('SIGINT', () => {
     cleanup();
+    console.log('SIGINT received, exiting...');
     process.exit();
 });
 
 process.on('SIGTERM', () => {
     cleanup();
+    console.log('SIGTERM received, exiting...');
     process.exit();
 });
 
