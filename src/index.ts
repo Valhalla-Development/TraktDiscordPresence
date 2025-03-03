@@ -15,7 +15,7 @@ import { initializeProgressBar } from './utils/progressBar.js';
 const AUTH_FILE = path.join('auth.json');
 
 // 20 hours in milliseconds
-const REFRESH_INTERVAL = 60000;
+const REFRESH_INTERVAL = 20 * 60 * 60 * 1000;
 let refreshIntervalId: NodeJS.Timeout | null = null;
 
 async function checkEnvironmentVariables() {
