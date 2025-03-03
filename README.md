@@ -91,6 +91,8 @@ TraktDiscordPresence is the missing link between your Trakt.tv account and Disco
     - Add `trakt.png` from the `images` folder as the app icon and cover image in `Rich Presence` section
     - Upload the remaining images from the `images` folder
 
+3. Rename `.env.example` to `.env` and input the information from steps 1 and 2
+
 ## 🎬 Usage
 
 1. Start the application:
@@ -98,11 +100,13 @@ TraktDiscordPresence is the missing link between your Trakt.tv account and Disco
    bun start
    ```
 
-2. When prompted, enter your Trakt Client ID, Trakt Client Secret, and Discord Client ID.
+2. The authentication process will run on first launch:
+   - The application will provide a link in the terminal
+   - Copy the code displayed in the terminal
+   - Open the provided link in your browser
+   - Paste the copied code into the website to authorize the application
 
-3. Follow the provided URL to authorize your Trakt account. Grant access and enter the received code in the terminal.
-
-4. After initial setup, run `bun start` again to launch the program.
+3. After initial setup, run `bun start` again to launch the program.
 
 Upon successful setup, your console output should resemble this:
 
