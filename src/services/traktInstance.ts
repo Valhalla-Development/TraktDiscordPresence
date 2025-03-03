@@ -60,15 +60,16 @@ export class TraktInstance {
         try {
             const pollData = await this.trakt.get_codes();
 
-            console.log(chalk.blue('\nTo authorize this application, please:'));
-            console.log(chalk.blue(`1. Visit: ${chalk.underline(pollData.verification_url)}`));
-            console.log(chalk.blue(`2. Enter code: ${chalk.bold(pollData.user_code)}`));
-            console.log(chalk.blue('\nWaiting for authorization...'));
+            console.log('\n' + chalk.red.bold('TRAKT AUTHORIZATION') + '\n');
+            console.log(chalk.magenta('➤ Visit:') + chalk.cyan.bold(` ${pollData.verification_url}`));
+            console.log(chalk.magenta('➤ Enter code:') + chalk.yellowBright.bold(` ${pollData.user_code}`));
+            console.log('\n' + chalk.white.italic('WAITING FOR AUTHORIZATION...'));
 
             const token = await this.trakt.poll_access(pollData);
-            console.log(chalk.green('\nAuthorization successful!'));
+            console.log('\n' + chalk.bgGreen.black(' SUCCESS ') + chalk.green(' Authorization complete! ') + '✓');
             return token;
         } catch {
+            console.error(chalk.red('\nFAuthorization timed out. Please try again.'));
             throw new Error('Authorization timed out. Please try again.');
         }
     }
