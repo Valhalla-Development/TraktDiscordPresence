@@ -30,7 +30,7 @@
   "devDependencies": {
     "@biomejs/biome": "^1.9.4",
     "@types/cli-progress": "^3.11.6",
-    "typescript": "^5.7.3",
+    "typescript": "^5.8.2",
     "ultracite": "^4.1.20"
   }
 }
