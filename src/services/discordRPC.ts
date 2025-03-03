@@ -41,6 +41,10 @@ export class DiscordRPC {
                 updateRetryInterval(null);
             }
 
+            if (!appState.traktInstance) {
+                appState.traktInstance = trakt;
+            }
+            
             await trakt.updateStatus();
 
             setInterval(() => trakt.updateStatus(), 15000);
