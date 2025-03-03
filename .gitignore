@@ -31,5 +31,5 @@ node_modules/
 # ========================
 # Config file
 # ========================
-config.json
-
+auth.json
+.env
