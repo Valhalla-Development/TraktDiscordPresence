@@ -40,6 +40,11 @@ async function refreshAndSaveToken(): Promise<void> {
         // Refresh the token
         const newToken = await appState.traktInstance!.refreshToken();
 
+        // Validate the new token
+        if (!newToken || !newToken.access_token || !newToken.refresh_token) {
+            throw new Error('Invalid token received from refresh');
+        }
+
         // Save the new token to the auth file
         writeFileSync(AUTH_FILE, JSON.stringify(newToken, null, 2));
 
@@ -52,7 +57,20 @@ async function refreshAndSaveToken(): Promise<void> {
             updateTraktCredentials(updatedConfig);
         }
     } catch (error) {
-        console.warn(chalk.yellow('Token refresh failed, continuing with existing token'), error);
+        console.error(chalk.red('Token refresh failed:'), error);
+        
+        // If refresh fails, attempt to re-authenticate
+        try {
+            console.log(chalk.yellow('Attempting to re-authenticate...'));
+            if (appState.traktCredentials) {
+                await authoriseTrakt(appState.traktCredentials);
+            } else {
+                throw new Error('No credentials available for re-authentication');
+            }
+        } catch (authError) {
+            console.error(chalk.red('Re-authentication failed:'), authError);
+            throw new Error('Both token refresh and re-authentication failed. Please check your credentials.');
+        }
     }
 }
 
