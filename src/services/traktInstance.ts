@@ -26,7 +26,26 @@ export class TraktInstance {
         this.discordRPC = new DiscordRPC();
     }
 
-    createTrakt(): Promise<void> {
+    private async validateToken(token: any): Promise<boolean> {
+        try {
+            if (!token || !token.access_token || !token.refresh_token) {
+                return false;
+            }
+
+            // Check if token is expired or will expire soon (within 5 minutes)
+            const expiresIn = token.expires_in || 0;
+            const createdAt = token.created_at || 0;
+            const now = Math.floor(Date.now() / 1000);
+            const timeElapsed = now - createdAt;
+            
+            return timeElapsed < (expiresIn - 300); // 300 seconds = 5 minutes
+        } catch (error) {
+            console.error(chalk.red('Token validation failed:'), error);
+            return false;
+        }
+    }
+
+    async createTrakt(): Promise<void> {
         if (!appState.traktCredentials) {
             throw new Error('Trakt credentials not found');
         }
@@ -37,7 +56,22 @@ export class TraktInstance {
         });
 
         if (appState.traktCredentials.oAuth) {
-            return this.trakt.import_token(JSON.parse(appState.traktCredentials.oAuth));
+            const token = JSON.parse(appState.traktCredentials.oAuth);
+            const isValid = await this.validateToken(token);
+            
+            if (!isValid) {
+                console.warn(chalk.yellow('Stored token is invalid or expired, attempting to refresh...'));
+                try {
+                    const newToken = await this.refreshToken();
+                    await this.trakt.import_token(newToken);
+                    return;
+                } catch (refreshError) {
+                    console.error(chalk.red('Token refresh failed:'), refreshError);
+                    throw new Error('Token is invalid and refresh failed. Please re-authenticate.');
+                }
+            }
+            
+            return this.trakt.import_token(token);
         }
 
         return Promise.resolve();
