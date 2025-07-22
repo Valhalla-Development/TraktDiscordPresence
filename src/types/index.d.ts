@@ -37,8 +37,9 @@ export interface TvShow {
 
 export interface TraktToken {
     access_token: string;
-    expires: number;
+    expires_in: number;
     refresh_token: string;
+    created_at: number;
 }
 
 export interface ProgressBarPayload {
