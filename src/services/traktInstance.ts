@@ -168,8 +168,8 @@ export class TraktInstance {
             }
 
             if (watching) {
-                updateInstanceState(ConnectionState.Playing);
                 await this.handleWatchingContent(watching);
+                updateInstanceState(ConnectionState.Playing);
             } else {
                 updateInstanceState(ConnectionState.NotPlaying);
                 updateProgressBar();
