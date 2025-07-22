@@ -147,10 +147,12 @@ async function ensureAuthentication(): Promise<void> {
                 // Fetch existing token
                 const storedToken = JSON.parse(readFileSync(AUTH_FILE, 'utf8'));
 
-                // Check for invalid token data before proceeding  
+                // Check for invalid token data before proceeding
                 const MAX_REASONABLE_TOKEN_LIFE = 86_400; // 24 hours
                 if (storedToken.expires_in > MAX_REASONABLE_TOKEN_LIFE) {
-                    console.log(chalk.yellow('🔄 Expired token detected, starting authentication...'));
+                    console.log(
+                        chalk.yellow('🔄 Expired token detected, starting authentication...')
+                    );
                     // Skip to fresh authentication
                     updateTraktCredentials(config);
                     await authoriseTrakt(config);
