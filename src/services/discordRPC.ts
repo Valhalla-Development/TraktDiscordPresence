@@ -4,8 +4,8 @@ import {
     updateCountdownTimer,
     updateInstanceState,
     updateLastErrorMessage,
-    updateRPC,
     updateRetryInterval,
+    updateRPC,
 } from '../state/appState.ts';
 import { ConnectionState } from '../types/index.d';
 import { updateProgressBar } from '../utils/progressBar.ts';
@@ -44,13 +44,13 @@ export class DiscordRPC {
             if (!appState.traktInstance) {
                 appState.traktInstance = trakt;
             }
-            
+
             await trakt.updateStatus();
 
-            setInterval(() => trakt.updateStatus(), 15000);
-        } catch (err) {
+            setInterval(() => trakt.updateStatus(), 15_000);
+        } catch (_err) {
             updateInstanceState(ConnectionState.Error);
-            const errorMessage = "Discord is not running or RPC connection failed."
+            const errorMessage = 'Discord is not running or RPC connection failed.';
 
             // Store the error message in the app state
             updateLastErrorMessage(errorMessage);
@@ -80,7 +80,7 @@ export class DiscordRPC {
             }, 1000);
             updateRetryInterval(newInterval);
 
-            setTimeout(() => this.spawnRPC(trakt), 15000);
+            setTimeout(() => this.spawnRPC(trakt), 15_000);
         }
 
         if (isDisconnected) {

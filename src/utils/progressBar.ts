@@ -89,7 +89,7 @@ export function updateProgressBar(payload?: ProgressBarPayload): void {
 
 function formatPlayingState(options: Options, params: Params, payload: ProgressBarPayload): string {
     const { startedAt, endsAt, content, type } = payload;
-    if (!startedAt || !endsAt || !content || !type) {
+    if (!(startedAt && endsAt && content && type)) {
         return 'Invalid payload for playing state';
     }
 
