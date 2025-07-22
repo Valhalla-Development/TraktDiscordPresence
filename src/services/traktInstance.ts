@@ -131,7 +131,7 @@ export class TraktInstance {
         }
     }
 
-    async updateStatus(): Promise<void> {
+    async updateStatus(testMode = false, testType?: 'movie' | 'show'): Promise<void> {
         try {
             if (!appState.rpc?.transport.isConnected) {
                 updateInstanceState(ConnectionState.Disconnected);
@@ -149,8 +149,18 @@ export class TraktInstance {
                 return;
             }
 
-            const user = await this.trakt.users.settings();
-            const watching = await this.trakt.users.watching({ username: user.user.username });
+            let watching: Movie | TvShow | null = null;
+
+            if (testMode) {
+                // Generate test data
+                watching = this.generateTestWatchingData(testType);
+                const typeMsg = testType ? `${testType}` : 'random content';
+                console.log(chalk.blue(`🧪 Test mode: Simulating watching ${typeMsg}...`));
+            } else {
+                // Normal mode: get real data from Trakt
+                const user = await this.trakt.users.settings();
+                watching = await this.trakt.users.watching({ username: user.user.username });
+            }
 
             if (watching) {
                 updateInstanceState(ConnectionState.Playing);
@@ -180,6 +190,7 @@ export class TraktInstance {
             smallImageKey: 'play',
             largeImageKey: 'trakt',
             startTimestamp: new Date(watching.started_at),
+            endTimestamp: new Date(watching.expires_at),
         };
 
         if (this.isMovie(watching)) {
@@ -204,7 +215,7 @@ export class TraktInstance {
             type: 'Movie',
         });
 
-        await appState.rpc?.user?.setActivity({ ...traktContent, details: detail });
+        await appState.rpc?.user?.setActivity({ ...traktContent, details: detail, type: 3 });
     }
 
     private async handleEpisode(watching: TvShow, traktContent: TraktContent): Promise<void> {
@@ -219,12 +230,47 @@ export class TraktInstance {
             type: 'TV Show',
         });
 
-        await appState.rpc?.user?.setActivity({ ...traktContent, details: detail, state });
+        await appState.rpc?.user?.setActivity({ ...traktContent, details: detail, state, type: 3 });
     }
 
     private async handleUpdateFailure(): Promise<void> {
         updateInstanceState(ConnectionState.Disconnected);
         await this.discordRPC.spawnRPC(this);
+    }
+
+        private generateTestWatchingData(type?: 'movie' | 'show'): Movie | TvShow {
+        const testMovie: Movie = {
+            expires_at: new Date(Date.now() + 2 * 60 * 60 * 1000).toISOString(), // 2 hours from now
+            started_at: new Date(Date.now() - 30 * 60 * 1000).toISOString(), // 30 minutes ago
+            movie: {
+                title: 'Interstellar',
+                year: 2014,
+            },
+        };
+
+        const testShow: TvShow = {
+            expires_at: new Date(Date.now() + 45 * 60 * 1000).toISOString(), // 45 minutes from now
+            started_at: new Date(Date.now() - 15 * 60 * 1000).toISOString(), // 15 minutes ago
+            show: {
+                title: 'Breaking Bad',
+            },
+            episode: {
+                season: 5,
+                number: 16,
+                title: 'Felina',
+            },
+        };
+
+        // Return specific type or random
+        switch (type) {
+            case 'movie':
+                return testMovie;
+            case 'show':
+                return testShow;
+            default:
+                // Randomly pick one
+                return Math.random() < 0.5 ? testMovie : testShow;
+        }
     }
 
     private validateToken(token: TraktToken): boolean {

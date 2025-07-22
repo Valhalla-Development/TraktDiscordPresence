@@ -9,6 +9,7 @@ export interface TraktContent {
     smallImageKey: string;
     largeImageKey: string;
     startTimestamp: Date;
+    endTimestamp?: Date;
     details?: string;
     state?: string;
 }

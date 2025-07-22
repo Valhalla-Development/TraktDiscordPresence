@@ -1,4 +1,5 @@
 import { Client } from '@xhayper/discord-rpc';
+import chalk from 'chalk';
 import {
     appState,
     updateCountdownTimer,
@@ -45,9 +46,22 @@ export class DiscordRPC {
                 appState.traktInstance = trakt;
             }
 
-            await trakt.updateStatus();
-
-            setInterval(() => trakt.updateStatus(), 15_000);
+            // Check if we're in test mode
+            const isTestMode = process.argv.includes('--test');
+            
+            if (isTestMode) {
+                // Parse test type from arguments
+                const testType = this.parseTestType();
+                console.log(chalk.cyan('🧪 Running in test mode - simulating Trakt activity'));
+                
+                await trakt.updateStatus(true, testType); // Pass test mode flag and type
+                
+                // In test mode, update every 30 seconds to see changes
+                setInterval(() => trakt.updateStatus(true, testType), 30_000);
+            } else {
+                await trakt.updateStatus();
+                setInterval(() => trakt.updateStatus(), 15_000);
+            }
         } catch (_err) {
             updateInstanceState(ConnectionState.Error);
             const errorMessage = 'Discord is not running or RPC connection failed.';
@@ -90,5 +104,17 @@ export class DiscordRPC {
         }
         // Use the stored error message for the initial update too
         updateProgressBar(currentErrorPayload);
+    }
+
+    private parseTestType(): 'movie' | 'show' | undefined {
+        // Check which script was run
+        const scriptName = process.env.npm_lifecycle_event || '';
+        
+        if (scriptName.includes('movie') || process.argv.includes('movie')) {
+            return 'movie';
+        }
+        if (scriptName.includes('show') || process.argv.includes('show')) {
+            return 'show';
+        }
     }
 }
