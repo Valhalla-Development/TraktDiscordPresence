@@ -20,6 +20,9 @@ export interface Movie {
     movie: {
         title: string;
         year: number;
+        ids: {
+            imdb: string;
+        };
     };
 }
 
@@ -28,11 +31,17 @@ export interface TvShow {
     started_at: string;
     show: {
         title: string;
+        ids: {
+            imdb: string;
+        };
     };
     episode: {
         season: number;
         number: number;
         title: string;
+        ids: {
+            imdb: string;
+        };
     };
 }
 
