@@ -59,7 +59,7 @@ export class DiscordRPC {
         }
     }
 
-    private async handleConnectionFailure(trakt: TraktInstance): Promise<void> {
+    private handleConnectionFailure(trakt: TraktInstance): void {
         const isDisconnected = appState.instanceState === ConnectionState.Disconnected;
         const isError = appState.instanceState === ConnectionState.Error;
 
