@@ -19,30 +19,42 @@ import { DiscordRPC } from './discordRPC.ts';
 
 export class TraktInstance {
     private trakt: Trakt;
-
     private discordRPC: DiscordRPC;
+    private readonly REFRESH_BUFFER = 60 * 60 * 1000; // 1 hour buffer before expiration
 
     constructor() {
         this.discordRPC = new DiscordRPC();
     }
 
-    private async validateToken(token: any): Promise<boolean> {
-        try {
-            if (!token || !token.access_token || !token.refresh_token) {
-                return false;
-            }
-
-            // Check if token is expired or will expire soon (within 5 minutes)
-            const expiresIn = token.expires_in || 0;
-            const createdAt = token.created_at || 0;
-            const now = Math.floor(Date.now() / 1000);
-            const timeElapsed = now - createdAt;
-            
-            return timeElapsed < (expiresIn - 300); // 300 seconds = 5 minutes
-        } catch (error) {
-            console.error(chalk.red('Token validation failed:'), error);
-            return false;
+    calculateTimeUntilRefresh(token: TraktToken): number {
+        if (!(token?.expires_in && token.created_at)) {
+            return 0;
         }
+
+        const expiresIn = token.expires_in * 1000; // Convert to milliseconds
+        const createdAt = token.created_at * 1000; // Convert to milliseconds
+        const expiresAt = createdAt + expiresIn;
+        const now = Date.now();
+
+        // Calculate time until we should refresh (1 hour before expiration)
+        const timeUntilExpiry = expiresAt - now - this.REFRESH_BUFFER;
+
+        // If token is expired or will expire soon, refresh immediately
+        if (timeUntilExpiry <= 0) {
+            return 0;
+        }
+
+        return timeUntilExpiry;
+    }
+
+    shouldRefreshToken(): boolean {
+        if (!appState.traktCredentials?.oAuth) {
+            return true;
+        }
+
+        const token = JSON.parse(appState.traktCredentials.oAuth);
+        const timeUntilRefresh = this.calculateTimeUntilRefresh(token);
+        return timeUntilRefresh <= 0;
     }
 
     async createTrakt(): Promise<void> {
@@ -57,10 +69,12 @@ export class TraktInstance {
 
         if (appState.traktCredentials.oAuth) {
             const token = JSON.parse(appState.traktCredentials.oAuth);
-            const isValid = await this.validateToken(token);
-            
+            const isValid = this.validateToken(token);
+
             if (!isValid) {
-                console.warn(chalk.yellow('Stored token is invalid or expired, attempting to refresh...'));
+                console.warn(
+                    chalk.yellow('Stored token is invalid or expired, attempting to refresh...')
+                );
                 try {
                     const newToken = await this.refreshToken();
                     await this.trakt.import_token(newToken);
@@ -70,7 +84,7 @@ export class TraktInstance {
                     throw new Error('Token is invalid and refresh failed. Please re-authenticate.');
                 }
             }
-            
+
             return this.trakt.import_token(token);
         }
 
@@ -94,13 +108,22 @@ export class TraktInstance {
         try {
             const pollData = await this.trakt.get_codes();
 
-            console.log('\n' + chalk.red.bold('TRAKT AUTHORIZATION') + '\n');
-            console.log(chalk.magenta('➤ Visit:') + chalk.cyan.bold(` ${pollData.verification_url}`));
-            console.log(chalk.magenta('➤ Enter code:') + chalk.yellowBright.bold(` ${pollData.user_code}`));
-            console.log('\n' + chalk.white.italic('WAITING FOR AUTHORIZATION...'));
+            console.log(`\n${chalk.red.bold('TRAKT AUTHORIZATION')}\n`);
+            console.log(
+                chalk.magenta('➤ Visit:') + chalk.cyan.bold(` ${pollData.verification_url}`)
+            );
+            console.log(
+                chalk.magenta('➤ Enter code:') + chalk.yellowBright.bold(` ${pollData.user_code}`)
+            );
+            console.log(`\n${chalk.white.italic('WAITING FOR AUTHORIZATION...')}`);
 
             const token = await this.trakt.poll_access(pollData);
-            console.log('\n' + chalk.bgGreen.black(' SUCCESS ') + chalk.green(' Authorization complete! ') + '✓');
+            console.log(
+                '\n' +
+                    chalk.bgGreen.black(' SUCCESS ') +
+                    chalk.green(' Authorization complete! ') +
+                    '✓'
+            );
             return token;
         } catch {
             console.error(chalk.red('\nFAuthorization timed out. Please try again.'));
@@ -110,7 +133,7 @@ export class TraktInstance {
 
     async updateStatus(): Promise<void> {
         try {
-            if (!appState.rpc || !appState.rpc.transport.isConnected) {
+            if (!appState.rpc?.transport.isConnected) {
                 updateInstanceState(ConnectionState.Disconnected);
                 const errorMsg =
                     'Discord is not running or RPC connection was lost. Attempting to reconnect...';
@@ -202,5 +225,24 @@ export class TraktInstance {
     private async handleUpdateFailure(): Promise<void> {
         updateInstanceState(ConnectionState.Disconnected);
         await this.discordRPC.spawnRPC(this);
+    }
+
+    private validateToken(token: TraktToken): boolean {
+        try {
+            if (!(token?.access_token && token.refresh_token)) {
+                return false;
+            }
+
+            // Check if token is expired or will expire soon (within 5 minutes)
+            const expiresIn = token.expires_in || 0;
+            const createdAt = token.created_at || 0;
+            const now = Math.floor(Date.now() / 1000);
+            const timeElapsed = now - createdAt;
+
+            return timeElapsed < expiresIn - 300;
+        } catch (error) {
+            console.error(chalk.red('Token validation failed:'), error);
+            return false;
+        }
     }
 }
