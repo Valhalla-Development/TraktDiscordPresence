@@ -13,12 +13,9 @@ import { type Configuration, ConnectionState } from './types/index.d';
 import { initializeProgressBar } from './utils/progressBar.js';
 
 const AUTH_FILE = path.join('auth.json');
+let refreshTimeoutId: NodeJS.Timeout | null = null;
 
-// 20 hours in milliseconds
-const REFRESH_INTERVAL = 20 * 60 * 60 * 1000;
-let refreshIntervalId: NodeJS.Timeout | null = null;
-
-async function checkEnvironmentVariables() {
+function checkEnvironmentVariables() {
     const requiredEnvVars = ['TRAKT_CLIENT_ID', 'TRAKT_CLIENT_SECRET', 'DISCORD_CLIENT_ID'];
     const missing = requiredEnvVars.filter((key) => !process.env[key]);
 
@@ -26,6 +23,30 @@ async function checkEnvironmentVariables() {
         console.error(chalk.red(`\nMissing required environment variables: ${missing.join(', ')}`));
         process.exit(1);
     }
+}
+
+function scheduleNextRefresh(): void {
+    if (!(appState.traktInstance && appState.traktCredentials?.oAuth)) {
+        return;
+    }
+
+    // Clear any existing timeout
+    if (refreshTimeoutId) {
+        clearTimeout(refreshTimeoutId);
+    }
+
+    const token = JSON.parse(appState.traktCredentials.oAuth);
+    const timeUntilRefresh = appState.traktInstance.calculateTimeUntilRefresh(token);
+
+    // Schedule the next refresh
+    refreshTimeoutId = setTimeout(async () => {
+        try {
+            await refreshAndSaveToken();
+            scheduleNextRefresh();
+        } catch (error) {
+            console.error(chalk.red('Failed to refresh token:'), error);
+        }
+    }, timeUntilRefresh);
 }
 
 async function refreshAndSaveToken(): Promise<void> {
@@ -37,55 +58,47 @@ async function refreshAndSaveToken(): Promise<void> {
             updateTraktInstance(traktInstance);
         }
 
-        // Refresh the token
-        const newToken = await appState.traktInstance!.refreshToken();
+        // Only refresh if needed
+        if (appState.traktInstance!.shouldRefreshToken()) {
+            const newToken = await appState.traktInstance!.refreshToken();
 
-        // Validate the new token
-        if (!newToken || !newToken.access_token || !newToken.refresh_token) {
-            throw new Error('Invalid token received from refresh');
+            // Validate the new token
+            if (!(newToken?.access_token && newToken.refresh_token)) {
+                throw new Error('Invalid token received from refresh');
+            }
+
+            writeFileSync(AUTH_FILE, JSON.stringify(newToken, null, 2));
+
+            // Update the app state with the new token
+            if (appState.traktCredentials) {
+                const updatedConfig = {
+                    ...appState.traktCredentials,
+                    oAuth: JSON.stringify(newToken),
+                };
+                updateTraktCredentials(updatedConfig);
+            }
         }
-
-        // Save the new token to the auth file
-        writeFileSync(AUTH_FILE, JSON.stringify(newToken, null, 2));
-
-        // Update the app state with the new token
-        if (appState.traktCredentials) {
-            const updatedConfig = {
-                ...appState.traktCredentials,
-                oAuth: JSON.stringify(newToken),
-            };
-            updateTraktCredentials(updatedConfig);
-        }
-    } catch (error) {
-        console.error(chalk.red('Token refresh failed:'), error);
-        
+    } catch (_error) {
         // If refresh fails, attempt to re-authenticate
         try {
-            console.log(chalk.yellow('Attempting to re-authenticate...'));
             if (appState.traktCredentials) {
                 await authoriseTrakt(appState.traktCredentials);
             } else {
-                throw new Error('No credentials available for re-authentication');
+                throw new Error('Authentication failed: No credentials available');
             }
-        } catch (authError) {
-            console.error(chalk.red('Re-authentication failed:'), authError);
-            throw new Error('Both token refresh and re-authentication failed. Please check your credentials.');
+        } catch (_authError) {
+            console.error(
+                chalk.red('Authentication failed. Please check your credentials and try again.')
+            );
+            cleanup();
+            process.exit(1);
         }
     }
 }
 
-async function setupTokenRefresh(): Promise<void> {
-    // Refresh token immediately on start
-    await refreshAndSaveToken();
-
-    // Set up interval to refresh token every 20 hours
-    if (refreshIntervalId) {
-        clearInterval(refreshIntervalId);
-    }
-
-    refreshIntervalId = setInterval(async () => {
-        await refreshAndSaveToken();
-    }, REFRESH_INTERVAL);
+function setupTokenRefresh(): void {
+    // Schedule the first refresh based on token expiration
+    scheduleNextRefresh();
 }
 
 async function authoriseTrakt(config: Configuration): Promise<void> {
@@ -146,7 +159,7 @@ async function ensureAuthentication(): Promise<void> {
                 updateTraktInstance(traktInstance);
 
                 // Set up token refresh (immediately and every 20 hours)
-                await setupTokenRefresh();
+                setupTokenRefresh();
 
                 return;
             } catch {
@@ -159,7 +172,7 @@ async function ensureAuthentication(): Promise<void> {
         await authoriseTrakt(config);
 
         // After initial authentication, set up token refresh
-        await setupTokenRefresh();
+        setupTokenRefresh();
     } catch (error) {
         console.error(
             chalk.red(
@@ -189,8 +202,8 @@ function cleanup() {
     if (appState.retryInterval) {
         clearInterval(appState.retryInterval);
     }
-    if (refreshIntervalId) {
-        clearInterval(refreshIntervalId);
+    if (refreshTimeoutId) {
+        clearTimeout(refreshTimeoutId);
     }
     if (appState.rpc) {
         appState.rpc.destroy();
