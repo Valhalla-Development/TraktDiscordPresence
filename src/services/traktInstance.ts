@@ -14,6 +14,7 @@ import {
     type TraktToken,
     type TvShow,
 } from '../types/index.d';
+import { getEpisodeImages, getMovieImage } from '../utils/getContentDetails.ts';
 import { updateProgressBar } from '../utils/progressBar.ts';
 import { DiscordRPC } from './discordRPC.ts';
 
@@ -21,6 +22,10 @@ export class TraktInstance {
     private trakt: Trakt;
     private discordRPC: DiscordRPC;
     private readonly REFRESH_BUFFER = 60 * 60 * 1000; // 1 hour buffer before expiration
+
+    // Track current content and its images
+    private currentContentId: string | null = null;
+    private currentImages: { small: string; large: string } = { small: 'play', large: 'trakt' };
 
     constructor() {
         this.discordRPC = new DiscordRPC();
@@ -186,9 +191,47 @@ export class TraktInstance {
     }
 
     private async handleWatchingContent(watching: Movie | TvShow): Promise<void> {
+        // Create unique ID for current content
+        const contentId = this.isMovie(watching)
+            ? `movie_${watching.movie.ids?.imdb}`
+            : `episode_${watching.episode.ids?.imdb}`;
+
+        // Only fetch images if content changed
+        if (contentId !== this.currentContentId) {
+            this.currentContentId = contentId;
+
+            try {
+                if (this.isMovie(watching)) {
+                    // Movie - get movie poster
+                    const movieId = watching.movie.ids?.imdb;
+                    if (movieId) {
+                        const result = await getMovieImage(movieId);
+                        this.currentImages = {
+                            small: 'play',
+                            large: result?.image || 'trakt',
+                        };
+                    }
+                } else {
+                    // Episode - get both series and episode images
+                    const seriesId = watching.show.ids?.imdb;
+                    const episodeId = watching.episode.ids?.imdb;
+                    if (seriesId && episodeId) {
+                        const result = await getEpisodeImages(seriesId, episodeId);
+                        this.currentImages = {
+                            small: result?.episodeImage || 'play',
+                            large: result?.seriesImage || 'trakt',
+                        };
+                    }
+                }
+            } catch (error) {
+                console.error('❌ Failed to fetch images:', error);
+                // Keep previous images or use defaults
+            }
+        }
+
         const traktContent: TraktContent = {
-            smallImageKey: 'play',
-            largeImageKey: 'trakt',
+            smallImageKey: this.currentImages.small,
+            largeImageKey: this.currentImages.large,
             startTimestamp: new Date(watching.started_at),
             endTimestamp: new Date(watching.expires_at),
         };
@@ -238,13 +281,16 @@ export class TraktInstance {
         await this.discordRPC.spawnRPC(this);
     }
 
-        private generateTestWatchingData(type?: 'movie' | 'show'): Movie | TvShow {
+    private generateTestWatchingData(type?: 'movie' | 'show'): Movie | TvShow {
         const testMovie: Movie = {
             expires_at: new Date(Date.now() + 2 * 60 * 60 * 1000).toISOString(), // 2 hours from now
             started_at: new Date(Date.now() - 30 * 60 * 1000).toISOString(), // 30 minutes ago
             movie: {
                 title: 'Interstellar',
                 year: 2014,
+                ids: {
+                    imdb: 'tt0816692',
+                },
             },
         };
 
@@ -253,11 +299,17 @@ export class TraktInstance {
             started_at: new Date(Date.now() - 15 * 60 * 1000).toISOString(), // 15 minutes ago
             show: {
                 title: 'Breaking Bad',
+                ids: {
+                    imdb: 'tt0903747',
+                },
             },
             episode: {
                 season: 5,
                 number: 16,
                 title: 'Felina',
+                ids: {
+                    imdb: 'tt2301455',
+                },
             },
         };
 
