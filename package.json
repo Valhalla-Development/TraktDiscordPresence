@@ -27,8 +27,8 @@
     "cli-progress": "^3.12.0",
     "colors": "^1.4.0",
     "luxon": "^3.7.1",
-    "movier": "^3.0.8",
     "pretty-ms": "^9.2.0",
+    "tmdb-ts": "^2.0.1",
     "trakt.tv": "^8.2.0"
   },
   "devDependencies": {
