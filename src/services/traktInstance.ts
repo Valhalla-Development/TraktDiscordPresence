@@ -1,6 +1,7 @@
 import chalk from 'chalk';
 // @ts-expect-error [currently, no types file exists for trakt.tv, so this will cause an error]
 import Trakt from 'trakt.tv';
+import { getSeasonImage } from 'utils/getContentDetails.ts';
 import {
     appState,
     updateInstanceState,
@@ -14,7 +15,6 @@ import {
     type TraktToken,
     type TvShow,
 } from '../types/index.d';
-import { getEpisodeImages, getMovieImage } from '../utils/getContentDetails.ts';
 import { updateProgressBar } from '../utils/progressBar.ts';
 import { DiscordRPC } from './discordRPC.ts';
 
@@ -193,8 +193,8 @@ export class TraktInstance {
     private async handleWatchingContent(watching: Movie | TvShow): Promise<void> {
         // Create unique ID for current content
         const contentId = this.isMovie(watching)
-            ? `movie_${watching.movie.ids?.imdb}`
-            : `episode_${watching.episode.ids?.imdb}`;
+            ? `movie_${watching.movie.ids?.tmdb}`
+            : `episode_${watching.episode.ids?.tmdb}`;
 
         // Only fetch images if content changed
         if (contentId !== this.currentContentId) {
@@ -203,23 +203,26 @@ export class TraktInstance {
             try {
                 if (this.isMovie(watching)) {
                     // Movie - get movie poster
-                    const movieId = watching.movie.ids?.imdb;
+                    const movieId = watching.movie.ids?.tmdb;
                     if (movieId) {
-                        const result = await getMovieImage(movieId);
+                        // const result = await getMovieImage(movieId);
                         this.currentImages = {
                             small: 'play',
-                            large: result?.image || 'trakt',
+                            large: /*result?.image || */ 'trakt',
                         };
                     }
                 } else {
-                    // Episode - get both series and episode images
-                    const seriesId = watching.show.ids?.imdb;
-                    const episodeId = watching.episode.ids?.imdb;
-                    if (seriesId && episodeId) {
-                        const result = await getEpisodeImages(seriesId, episodeId);
+                    // Episode - get both season and episode images
+                    const seriesId = watching.show.ids.tmdb;
+                    const seasonId = watching.episode.season;
+                    const episodeId = watching.episode.number;
+
+                    if (seasonId && episodeId) {
+                        const result = await getSeasonImage(seriesId, seasonId, episodeId);
+
                         this.currentImages = {
                             small: result?.episodeImage || 'play',
-                            large: result?.seriesImage || 'trakt',
+                            large: result?.seasonImage || 'trakt',
                         };
                     }
                 }
@@ -289,7 +292,7 @@ export class TraktInstance {
                 title: 'Interstellar',
                 year: 2014,
                 ids: {
-                    imdb: 'tt0816692',
+                    tmdb: '157336',
                 },
             },
         };
@@ -300,7 +303,7 @@ export class TraktInstance {
             show: {
                 title: 'Breaking Bad',
                 ids: {
-                    imdb: 'tt0903747',
+                    tmdb: '1396',
                 },
             },
             episode: {
@@ -308,7 +311,7 @@ export class TraktInstance {
                 number: 16,
                 title: 'Felina',
                 ids: {
-                    imdb: 'tt2301455',
+                    tmdb: '1396',
                 },
             },
         };
