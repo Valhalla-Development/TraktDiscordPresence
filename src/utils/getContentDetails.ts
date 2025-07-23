@@ -12,7 +12,7 @@ const seasonCache = new LRUCache<
     ttlAutopurge: true, // Automatically remove expired items in background
 });
 
-const tmdb = new TMDB(process.env.TMDB_API_KEY!);
+const tmdb = process.env.TMDB_API_KEY ? new TMDB(process.env.TMDB_API_KEY) : null;
 
 /**
  * Fetches season poster and episode image from TMDB
@@ -22,6 +22,10 @@ export async function getSeasonImage(
     seasonNumber: number,
     episodeNumber: number
 ): Promise<{ seasonImage: string; episodeImage: string | null } | null> {
+    if (!tmdb) {
+        return null;
+    }
+
     const cacheKey = `season_${tmdbId}_${seasonNumber}`;
 
     // Check cache first
