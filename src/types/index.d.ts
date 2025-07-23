@@ -21,7 +21,7 @@ export interface Movie {
         title: string;
         year: number;
         ids: {
-            imdb: string;
+            tmdb: string;
         };
     };
 }
@@ -32,7 +32,7 @@ export interface TvShow {
     show: {
         title: string;
         ids: {
-            imdb: string;
+            tmdb: string;
         };
     };
     episode: {
@@ -40,7 +40,7 @@ export interface TvShow {
         number: number;
         title: string;
         ids: {
-            imdb: string;
+            tmdb: string;
         };
     };
 }
