@@ -27,7 +27,6 @@ export async function getSeasonImage(
     // Check cache first
     const cached = seasonCache.get(cacheKey);
     if (cached) {
-        console.log(`\n\n🎯 Cache HIT for ${cacheKey} - episode ${episodeNumber}\n\n`);
         // Find episode from cached data
         const episode = cached.episodes.find((ep) => ep.episode_number === episodeNumber);
         return {
