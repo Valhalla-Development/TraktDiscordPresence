@@ -1,6 +1,6 @@
 {
   "name": "traktdiscordpresence",
-  "version": "3.3.0",
+  "version": "3.3.1",
   "description": "Set your Discord presence according to what you are watching on Trakt.tv",
   "license": "GPL-3.0-or-later",
   "author": "Ragnar Lothbrok <ragnarlothbrokjr@proton.me>",
@@ -35,6 +35,6 @@
     "@biomejs/biome": "^2.1.2",
     "@types/cli-progress": "^3.11.6",
     "typescript": "^5.8.3",
-    "ultracite": "^5.0.47"
+    "ultracite": "^5.0.48"
   }
 }
