@@ -4,11 +4,15 @@ import { TMDB } from 'tmdb-ts';
 // Cache for content posters/thumbnails to avoid repeat calls
 const contentCache = new LRUCache<
     string,
-    { seasonImage: string; episodes: { episode_number: number; still_path?: string }[] }
+    {
+        type: 'season' | 'movie';
+        image: string;
+        episodes?: { episode_number: number; still_path?: string }[];
+    }
 >({
-    max: 50, // Maximum number of cached seasons
+    max: 50, // Maximum number of cached items
     ttl: 6 * 60 * 60 * 1000, // 6 hours TTL
-    updateAgeOnGet: true, // Reset TTL when item is accessed (keeps popular seasons fresh)
+    updateAgeOnGet: true, // Reset TTL when item is accessed (keeps popular content fresh)
     ttlAutopurge: true, // Automatically remove expired items in background
 });
 
@@ -30,11 +34,11 @@ export async function getShowImages(
 
     // Check cache first
     const cached = contentCache.get(cacheKey);
-    if (cached) {
+    if (cached && cached.type === 'season') {
         // Find episode from cached data
-        const episode = cached.episodes.find((ep) => ep.episode_number === episodeNumber);
+        const episode = cached.episodes?.find((ep) => ep.episode_number === episodeNumber);
         return {
-            seasonImage: cached.seasonImage,
+            seasonImage: cached.image,
             episodeImage: episode?.still_path
                 ? `https://image.tmdb.org/t/p/w500${episode.still_path}`
                 : null,
@@ -52,7 +56,8 @@ export async function getShowImages(
 
             // Cache the season data
             contentCache.set(cacheKey, {
-                seasonImage: seasonImageUrl,
+                type: 'season',
+                image: seasonImageUrl,
                 episodes: seasonData.episodes || [],
             });
 
