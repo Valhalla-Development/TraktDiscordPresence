@@ -1,7 +1,7 @@
 import chalk from 'chalk';
 // @ts-expect-error [currently, no types file exists for trakt.tv, so this will cause an error]
 import Trakt from 'trakt.tv';
-import { getShowImages } from 'utils/getContentDetails.ts';
+import { getMovieImage, getShowImages } from 'utils/getContentDetails.ts';
 import {
     appState,
     updateInstanceState,
@@ -205,10 +205,10 @@ export class TraktInstance {
                     // Movie - get movie poster
                     const movieId = watching.movie.ids?.tmdb;
                     if (movieId) {
-                        // const result = await getMovieImage(movieId);
+                        const result = await getMovieImage(movieId);
                         this.currentImages = {
                             small: 'play',
-                            large: /*result?.image || */ 'trakt',
+                            large: result || 'trakt',
                         };
                     }
                 } else {
