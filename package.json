@@ -15,7 +15,6 @@
     "lint:fix": "biome check --write --no-errors-on-unmatched --files-ignore-unknown=true src",
     "dev": "bun --watch src/index.ts",
     "start": "bun src/index.ts",
-    "test": "bun src/index.ts --test",
     "test:movie": "bun src/index.ts --test movie",
     "test:show": "bun src/index.ts --test show",
     "type-check": "tsc --noEmit"

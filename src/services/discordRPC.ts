@@ -106,15 +106,15 @@ export class DiscordRPC {
         updateProgressBar(currentErrorPayload);
     }
 
-    private parseTestType(): 'movie' | 'show' | undefined {
+    private parseTestType(): 'movie' | 'show' {
         // Check which script was run
         const scriptName = process.env.npm_lifecycle_event || '';
 
         if (scriptName.includes('movie') || process.argv.includes('movie')) {
             return 'movie';
         }
-        if (scriptName.includes('show') || process.argv.includes('show')) {
-            return 'show';
-        }
+
+        // Return show
+        return 'show';
     }
 }

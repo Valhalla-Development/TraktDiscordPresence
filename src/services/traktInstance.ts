@@ -158,7 +158,7 @@ export class TraktInstance {
 
             if (testMode) {
                 // Generate test data
-                watching = this.generateTestWatchingData(testType);
+                watching = this.generateTestWatchingData(testType!);
                 const typeMsg = testType ? `${testType}` : 'random content';
                 console.log(chalk.blue(`🧪 Test mode: Simulating watching ${typeMsg}...`));
             } else {
@@ -336,7 +336,7 @@ export class TraktInstance {
         await this.discordRPC.spawnRPC(this);
     }
 
-    private generateTestWatchingData(type?: 'movie' | 'show'): Movie | TvShow {
+    private generateTestWatchingData(type: 'movie' | 'show'): Movie | TvShow {
         const testMovie: Movie = {
             expires_at: new Date(Date.now() + 2 * 60 * 60 * 1000).toISOString(), // 2 hours from now
             started_at: new Date(Date.now() - 30 * 60 * 1000).toISOString(), // 30 minutes ago
@@ -368,16 +368,11 @@ export class TraktInstance {
             },
         };
 
-        // Return specific type or random
-        switch (type) {
-            case 'movie':
-                return testMovie;
-            case 'show':
-                return testShow;
-            default:
-                // Randomly pick one
-                return Math.random() < 0.5 ? testMovie : testShow;
+        if (type === 'movie') {
+            return testMovie;
         }
+
+        return testShow;
     }
 
     private validateToken(token: TraktToken): boolean {
