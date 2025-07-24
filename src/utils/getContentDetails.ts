@@ -77,3 +77,40 @@ export async function getShowImages(
 
     return null;
 }
+
+/**
+ * Fetches movie poster from TMDB
+ */
+export async function getMovieImage(tmdbId: string): Promise<string | null> {
+    if (!tmdb) {
+        return null;
+    }
+
+    const cacheKey = `movie_${tmdbId}`;
+
+    // Check cache first
+    const cached = contentCache.get(cacheKey);
+    if (cached && cached.type === 'movie') {
+        return cached.image;
+    }
+
+    try {
+        const movieData = await tmdb.movies.details(Number.parseInt(tmdbId, 10));
+
+        if (movieData.poster_path) {
+            const movieImageUrl = `https://image.tmdb.org/t/p/w500${movieData.poster_path}`;
+
+            // Cache the movie data
+            contentCache.set(cacheKey, {
+                type: 'movie',
+                image: movieImageUrl,
+            });
+
+            return movieImageUrl;
+        }
+    } catch (error) {
+        console.error(`Error fetching movie for TMDB ID ${tmdbId}:`, error);
+    }
+
+    return null;
+}
