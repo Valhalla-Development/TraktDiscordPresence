@@ -1,8 +1,8 @@
 import { LRUCache } from 'lru-cache';
 import { TMDB } from 'tmdb-ts';
 
-// Cache for season data to avoid repeat calls
-const seasonCache = new LRUCache<
+// Cache for content posters/thumbnails to avoid repeat calls
+const contentCache = new LRUCache<
     string,
     { seasonImage: string; episodes: { episode_number: number; still_path?: string }[] }
 >({
@@ -17,7 +17,7 @@ const tmdb = process.env.TMDB_API_KEY ? new TMDB(process.env.TMDB_API_KEY) : nul
 /**
  * Fetches season poster and episode image from TMDB
  */
-export async function getSeasonImage(
+export async function getShowImages(
     tmdbId: string,
     seasonNumber: number,
     episodeNumber: number
@@ -29,7 +29,7 @@ export async function getSeasonImage(
     const cacheKey = `season_${tmdbId}_${seasonNumber}`;
 
     // Check cache first
-    const cached = seasonCache.get(cacheKey);
+    const cached = contentCache.get(cacheKey);
     if (cached) {
         // Find episode from cached data
         const episode = cached.episodes.find((ep) => ep.episode_number === episodeNumber);
@@ -51,7 +51,7 @@ export async function getSeasonImage(
             const seasonImageUrl = `https://image.tmdb.org/t/p/w500${seasonData.poster_path}`;
 
             // Cache the season data
-            seasonCache.set(cacheKey, {
+            contentCache.set(cacheKey, {
                 seasonImage: seasonImageUrl,
                 episodes: seasonData.episodes || [],
             });

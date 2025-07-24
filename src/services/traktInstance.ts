@@ -1,7 +1,7 @@
 import chalk from 'chalk';
 // @ts-expect-error [currently, no types file exists for trakt.tv, so this will cause an error]
 import Trakt from 'trakt.tv';
-import { getSeasonImage } from 'utils/getContentDetails.ts';
+import { getShowImages } from 'utils/getContentDetails.ts';
 import {
     appState,
     updateInstanceState,
@@ -218,7 +218,7 @@ export class TraktInstance {
                     const episodeId = watching.episode.number;
 
                     if (seasonId && episodeId) {
-                        const result = await getSeasonImage(seriesId, seasonId, episodeId);
+                        const result = await getShowImages(seriesId, seasonId, episodeId);
 
                         this.currentImages = {
                             small: result?.episodeImage || 'play',
