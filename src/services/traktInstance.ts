@@ -250,6 +250,31 @@ export class TraktInstance {
         return 'movie' in content;
     }
 
+    private formatTraktUrl(
+        type: 'movie' | 'show',
+        title: string,
+        year?: number,
+        season?: number,
+        episode?: number
+    ): string {
+        const slug = title
+            .toLowerCase()
+            .replace(/[^\w\s-]/g, '') // Remove special chars
+            .replace(/\s+/g, '-') // Replace spaces with dashes
+            .trim();
+
+        if (type === 'movie' && year) {
+            return `https://trakt.tv/movies/${slug}-${year}`;
+        }
+
+        if (type === 'show' && season && episode) {
+            return `https://trakt.tv/shows/${slug}/seasons/${season}/episodes/${episode}`;
+        }
+
+        // Fallback for show without episode info
+        return `https://trakt.tv/shows/${slug}`;
+    }
+
     private async handleMovie(watching: Movie, traktContent: TraktContent): Promise<void> {
         const { movie } = watching;
         const detail = `${movie.title} (${movie.year})`;
@@ -261,7 +286,17 @@ export class TraktInstance {
             type: 'Movie',
         });
 
-        await appState.rpc?.user?.setActivity({ ...traktContent, details: detail, type: 3 });
+        await appState.rpc?.user?.setActivity({
+            ...traktContent,
+            details: detail,
+            type: 3,
+            buttons: [
+                {
+                    label: 'View on Trakt',
+                    url: this.formatTraktUrl('movie', movie.title, movie.year),
+                },
+            ],
+        });
     }
 
     private async handleEpisode(watching: TvShow, traktContent: TraktContent): Promise<void> {
@@ -276,7 +311,24 @@ export class TraktInstance {
             type: 'TV Show',
         });
 
-        await appState.rpc?.user?.setActivity({ ...traktContent, details: detail, state, type: 3 });
+        await appState.rpc?.user?.setActivity({
+            ...traktContent,
+            details: detail,
+            state,
+            type: 3,
+            buttons: [
+                {
+                    label: 'View on Trakt',
+                    url: this.formatTraktUrl(
+                        'show',
+                        show.title,
+                        undefined,
+                        episode.season,
+                        episode.number
+                    ),
+                },
+            ],
+        });
     }
 
     private async handleUpdateFailure(): Promise<void> {
