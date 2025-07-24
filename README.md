@@ -113,7 +113,7 @@ Upon successful setup, your console output should resemble this:
 - **Console Output**
   </br><img src="https://share.valhalladev.org/u/TraktDiscordPresence-Console.png" width="80%" alt="Example Output">
 - **Discord Status**
-  </br><img src="https://share.valhalladev.org/u/TraktDiscordPresence-Discord.png" width="30%" alt="Discord Example">
+  </br><img src="https://share.valhalladev.org/u/TraktDiscordPresence-Discordv1.1.png" width="40%" alt="Discord Example">
 
 ## 📊 Logging
 
