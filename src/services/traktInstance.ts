@@ -163,8 +163,7 @@ export class TraktInstance {
                 console.log(chalk.blue(`🧪 Test mode: Simulating watching ${typeMsg}...`));
             } else {
                 // Normal mode: get real data from Trakt
-                const user = await this.trakt.users.settings();
-                watching = await this.trakt.users.watching({ username: user.user.username });
+                watching = await this.trakt.users.watching({ username: 'me' });
             }
 
             if (watching) {
