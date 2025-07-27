@@ -81,8 +81,8 @@ export class TraktInstance {
                     chalk.yellow('Stored token is invalid or expired, attempting to refresh...')
                 );
                 try {
-                    const newToken = await this.refreshToken();
-                    await this.trakt.import_token(newToken);
+                    await this.trakt.import_token(token);
+                    await this.refreshToken();
                     return;
                 } catch (refreshError) {
                     console.error(chalk.red('Token refresh failed:'), refreshError);
