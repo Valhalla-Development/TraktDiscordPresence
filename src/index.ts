@@ -25,7 +25,7 @@ function checkEnvironmentVariables() {
     }
 }
 
-function scheduleNextRefresh(): void {
+async function scheduleNextRefresh(): Promise<void> {
     if (!(appState.traktInstance && appState.traktCredentials?.oAuth)) {
         return;
     }
@@ -38,11 +38,29 @@ function scheduleNextRefresh(): void {
     const token = JSON.parse(appState.traktCredentials.oAuth);
     const timeUntilRefresh = appState.traktInstance.calculateTimeUntilRefresh(token);
 
+    // Check if value is too large for a 32-bit signed integer
+    if (timeUntilRefresh > 2 ** 31 - 1) {
+        // Create a configuration object from environment variables
+        const config: Configuration = {
+            clientId: process.env.TRAKT_CLIENT_ID!,
+            clientSecret: process.env.TRAKT_CLIENT_SECRET!,
+            discordClientId: process.env.DISCORD_CLIENT_ID!,
+        };
+
+        console.log(chalk.yellow('🔄 Expired token detected, starting authentication...'));
+
+        // Skip to fresh authentication
+        updateTraktCredentials(config);
+        await authoriseTrakt(config);
+        await setupTokenRefresh();
+        return;
+    }
+
     // Schedule the next refresh
     refreshTimeoutId = setTimeout(async () => {
         try {
             await refreshAndSaveToken();
-            scheduleNextRefresh();
+            await scheduleNextRefresh();
         } catch (error) {
             console.error(chalk.red('Failed to refresh token:'), error);
         }
@@ -96,9 +114,9 @@ async function refreshAndSaveToken(): Promise<void> {
     }
 }
 
-function setupTokenRefresh(): void {
+async function setupTokenRefresh(): Promise<void> {
     // Schedule the first refresh based on token expiration
-    scheduleNextRefresh();
+    await scheduleNextRefresh();
 }
 
 async function authoriseTrakt(config: Configuration): Promise<void> {
@@ -147,19 +165,6 @@ async function ensureAuthentication(): Promise<void> {
                 // Fetch existing token
                 const storedToken = JSON.parse(readFileSync(AUTH_FILE, 'utf8'));
 
-                // Check for invalid token data before proceeding
-                const MAX_REASONABLE_TOKEN_LIFE = 86_400; // 24 hours
-                if (storedToken.expires_in > MAX_REASONABLE_TOKEN_LIFE) {
-                    console.log(
-                        chalk.yellow('🔄 Expired token detected, starting authentication...')
-                    );
-                    // Skip to fresh authentication
-                    updateTraktCredentials(config);
-                    await authoriseTrakt(config);
-                    setupTokenRefresh();
-                    return;
-                }
-
                 const configWithToken = {
                     ...config,
                     oAuth: JSON.stringify(storedToken),
@@ -172,7 +177,7 @@ async function ensureAuthentication(): Promise<void> {
                 updateTraktInstance(traktInstance);
 
                 // Set up token refresh (immediately and every 20 hours)
-                setupTokenRefresh();
+                await setupTokenRefresh();
 
                 return;
             } catch {
@@ -185,7 +190,7 @@ async function ensureAuthentication(): Promise<void> {
         await authoriseTrakt(config);
 
         // After initial authentication, set up token refresh
-        setupTokenRefresh();
+        await setupTokenRefresh();
     } catch (error) {
         console.error(
             chalk.red(
