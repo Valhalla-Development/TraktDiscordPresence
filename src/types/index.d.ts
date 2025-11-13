@@ -34,6 +34,7 @@ export interface TvShow {
         ids: {
             tmdb: string;
         };
+        year: number;
     };
     episode: {
         season: number;
