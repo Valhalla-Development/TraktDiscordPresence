@@ -300,8 +300,8 @@ export class TraktInstance {
 
     private async handleEpisode(watching: TvShow, traktContent: TraktContent): Promise<void> {
         const { show, episode } = watching;
-        const detail = show.title;
-        const state = `S${episode.season}E${episode.number} (${episode.title})`;
+        const detail = `${show.title} (${show.year})`;
+        const state = `S${episode.season} E${episode.number} · ${episode.title}`;
 
         updateProgressBar({
             content: `${detail} - ${state}`,
@@ -356,6 +356,7 @@ export class TraktInstance {
                 ids: {
                     tmdb: '1396',
                 },
+                year: 2008,
             },
             episode: {
                 season: 5,
