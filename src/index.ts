@@ -16,13 +16,43 @@ const AUTH_FILE = path.join('auth.json');
 let refreshTimeoutId: NodeJS.Timeout | null = null;
 
 function checkEnvironmentVariables() {
-    const requiredEnvVars = ['TRAKT_CLIENT_ID', 'TRAKT_CLIENT_SECRET', 'DISCORD_CLIENT_ID'];
+    const requiredEnvVars = ['TRAKT_CLIENT_ID', 'TRAKT_CLIENT_SECRET'];
     const missing = requiredEnvVars.filter((key) => !process.env[key]);
+
+    const hasMovieDiscordId = Boolean(
+        process.env.MOVIE_DISCORD_CLIENT_ID || process.env.DISCORD_CLIENT_ID
+    );
+    const hasSeriesDiscordId = Boolean(
+        process.env.SERIES_DISCORD_CLIENT_ID || process.env.DISCORD_CLIENT_ID
+    );
+
+    if (!hasMovieDiscordId) {
+        missing.push('MOVIE_DISCORD_CLIENT_ID');
+    }
+
+    if (!hasSeriesDiscordId) {
+        missing.push('SERIES_DISCORD_CLIENT_ID');
+    }
 
     if (missing.length > 0) {
         console.error(chalk.red(`\nMissing required environment variables: ${missing.join(', ')}`));
         process.exit(1);
     }
+}
+
+function resolveDiscordClientIds(): {
+    movieDiscordClientId: string;
+    seriesDiscordClientId: string;
+} {
+    const fallback = process.env.DISCORD_CLIENT_ID;
+    const movieDiscordClientId = process.env.MOVIE_DISCORD_CLIENT_ID || fallback;
+    const seriesDiscordClientId = process.env.SERIES_DISCORD_CLIENT_ID || fallback;
+
+    if (!(movieDiscordClientId && seriesDiscordClientId)) {
+        throw new Error('Discord client IDs are not configured correctly');
+    }
+
+    return { movieDiscordClientId, seriesDiscordClientId };
 }
 
 async function scheduleNextRefresh(): Promise<void> {
@@ -41,10 +71,13 @@ async function scheduleNextRefresh(): Promise<void> {
     // Check if value is too large for a 32-bit signed integer
     if (timeUntilRefresh > 2 ** 31 - 1) {
         // Create a configuration object from environment variables
+        const { movieDiscordClientId, seriesDiscordClientId } = resolveDiscordClientIds();
         const config: Configuration = {
             clientId: process.env.TRAKT_CLIENT_ID!,
             clientSecret: process.env.TRAKT_CLIENT_SECRET!,
-            discordClientId: process.env.DISCORD_CLIENT_ID!,
+            discordClientId: movieDiscordClientId,
+            movieDiscordClientId,
+            seriesDiscordClientId,
         };
 
         console.log(chalk.yellow('🔄 Expired token detected, starting authentication...'));
@@ -153,10 +186,13 @@ async function ensureAuthentication(): Promise<void> {
         await checkEnvironmentVariables();
 
         // Create a configuration object from environment variables
+        const { movieDiscordClientId, seriesDiscordClientId } = resolveDiscordClientIds();
         const config: Configuration = {
             clientId: process.env.TRAKT_CLIENT_ID!,
             clientSecret: process.env.TRAKT_CLIENT_SECRET!,
-            discordClientId: process.env.DISCORD_CLIENT_ID!,
+            discordClientId: movieDiscordClientId,
+            movieDiscordClientId,
+            seriesDiscordClientId,
         };
 
         // Check for stored token first
