@@ -13,7 +13,11 @@ import { updateProgressBar } from '../utils/progressBar.ts';
 import type { TraktInstance } from './traktInstance.ts';
 
 export class DiscordRPC {
+    private statusInterval: NodeJS.Timeout | null = null;
+
     async spawnRPC(trakt: TraktInstance): Promise<void> {
+        this.clearStatusInterval();
+
         try {
             if (!appState.traktCredentials) {
                 updateInstanceState(ConnectionState.Error);
@@ -57,12 +61,13 @@ export class DiscordRPC {
                 await trakt.updateStatus(true, testType); // Pass test mode flag and type
 
                 // In test mode, update every 30 seconds to see changes
-                setInterval(() => trakt.updateStatus(true, testType), 30_000);
+                this.statusInterval = setInterval(() => trakt.updateStatus(true, testType), 30_000);
             } else {
                 await trakt.updateStatus();
-                setInterval(() => trakt.updateStatus(), 15_000);
+                this.statusInterval = setInterval(() => trakt.updateStatus(), 15_000);
             }
         } catch (_err) {
+            this.clearStatusInterval();
             updateInstanceState(ConnectionState.Error);
             const errorMessage = 'Discord is not running or RPC connection failed.';
 
@@ -104,6 +109,13 @@ export class DiscordRPC {
         }
         // Use the stored error message for the initial update too
         updateProgressBar(currentErrorPayload);
+    }
+
+    private clearStatusInterval(): void {
+        if (this.statusInterval) {
+            clearInterval(this.statusInterval);
+            this.statusInterval = null;
+        }
     }
 
     private parseTestType(): 'movie' | 'show' {
