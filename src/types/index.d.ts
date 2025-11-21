@@ -1,20 +1,22 @@
-export interface Configuration {
+export type Configuration = {
     clientId: string;
     clientSecret: string;
     discordClientId: string;
+    movieDiscordClientId: string;
+    seriesDiscordClientId: string;
     oAuth?: string;
-}
+};
 
-export interface TraktContent {
+export type TraktContent = {
     smallImageKey: string;
     largeImageKey: string;
     startTimestamp: Date;
     endTimestamp?: Date;
     details?: string;
     state?: string;
-}
+};
 
-export interface Movie {
+export type Movie = {
     expires_at: string;
     started_at: string;
     movie: {
@@ -24,9 +26,9 @@ export interface Movie {
             tmdb: string;
         };
     };
-}
+};
 
-export interface TvShow {
+export type TvShow = {
     expires_at: string;
     started_at: string;
     show: {
@@ -44,22 +46,22 @@ export interface TvShow {
             tmdb: string;
         };
     };
-}
+};
 
-export interface TraktToken {
+export type TraktToken = {
     access_token: string;
     expires_in: number;
     refresh_token: string;
     created_at: number;
-}
+};
 
-export interface ProgressBarPayload {
+export type ProgressBarPayload = {
     content?: string;
     startedAt?: string;
     endsAt?: string;
     type?: string;
     error?: string;
-}
+};
 
 export const ConnectionState = {
     Playing: 0,
