@@ -2,7 +2,7 @@ import type { Client } from '@xhayper/discord-rpc';
 import type { TraktInstance } from '../services/traktInstance';
 import { type Configuration, ConnectionState } from '../types/index.d';
 
-export interface AppState {
+export type AppState = {
     instanceState: ConnectionState;
     rpc: Client | null;
     retryInterval: NodeJS.Timeout | null;
@@ -10,7 +10,7 @@ export interface AppState {
     traktCredentials: Configuration | null;
     lastErrorMessage: string | null;
     traktInstance: TraktInstance | null;
-}
+};
 
 export const appState: AppState = {
     instanceState: ConnectionState.Disconnected,
