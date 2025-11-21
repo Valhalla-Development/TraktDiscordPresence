@@ -7,6 +7,8 @@ import {
     updateInstanceState,
     updateLastErrorMessage,
     updateRetryInterval,
+    updateRPC,
+    updateTraktCredentials,
 } from '../state/appState.ts';
 import {
     ConnectionState,
@@ -20,12 +22,15 @@ import { DiscordRPC } from './discordRPC.ts';
 
 export class TraktInstance {
     private trakt: Trakt;
-    private discordRPC: DiscordRPC;
+    private readonly discordRPC: DiscordRPC;
     private readonly REFRESH_BUFFER = 60 * 60 * 1000; // 1 hour buffer before expiration
 
     // Track current content and its images
     private currentContentId: string | null = null;
-    private currentImages: { small: string; large: string } = { small: 'play', large: 'trakt' };
+    private currentImages: { small: string; large: string } = {
+        small: 'play',
+        large: 'trakt',
+    };
 
     constructor() {
         this.discordRPC = new DiscordRPC();
@@ -167,6 +172,12 @@ export class TraktInstance {
             }
 
             if (watching) {
+                const contentType = this.isMovie(watching) ? 'movie' : 'show';
+                const hasActiveClient = await this.ensureDiscordClientForContent(contentType);
+                if (!hasActiveClient) {
+                    return;
+                }
+
                 await this.handleWatchingContent(watching);
                 updateInstanceState(ConnectionState.Playing);
             } else {
@@ -249,13 +260,19 @@ export class TraktInstance {
         return 'movie' in content;
     }
 
-    private formatTraktUrl(
-        type: 'movie' | 'show',
-        title: string,
-        year?: number,
-        season?: number,
-        episode?: number
-    ): string {
+    private formatTraktUrl({
+        type,
+        title,
+        year,
+        season,
+        episode,
+    }: {
+        type: 'movie' | 'show';
+        title: string;
+        year?: number;
+        season?: number;
+        episode?: number;
+    }): string {
         const slug = title
             .toLowerCase()
             .replace(/[^\w\s-]/g, '') // Remove special chars
@@ -292,7 +309,11 @@ export class TraktInstance {
             buttons: [
                 {
                     label: 'View on Trakt',
-                    url: this.formatTraktUrl('movie', movie.title, movie.year),
+                    url: this.formatTraktUrl({
+                        type: 'movie',
+                        title: movie.title,
+                        year: movie.year,
+                    }),
                 },
             ],
         });
@@ -318,13 +339,12 @@ export class TraktInstance {
             buttons: [
                 {
                     label: 'View on Trakt',
-                    url: this.formatTraktUrl(
-                        'show',
-                        show.title,
-                        undefined,
-                        episode.season,
-                        episode.number
-                    ),
+                    url: this.formatTraktUrl({
+                        type: 'show',
+                        title: show.title,
+                        season: episode.season,
+                        episode: episode.number,
+                    }),
                 },
             ],
         });
@@ -392,5 +412,41 @@ export class TraktInstance {
             console.error(chalk.red('Token validation failed:'), error);
             return false;
         }
+    }
+
+    private async ensureDiscordClientForContent(contentType: 'movie' | 'show'): Promise<boolean> {
+        if (!appState.traktCredentials) {
+            throw new Error('Trakt credentials not found');
+        }
+
+        const targetClientId =
+            contentType === 'movie'
+                ? appState.traktCredentials.movieDiscordClientId
+                : appState.traktCredentials.seriesDiscordClientId;
+
+        if (
+            targetClientId &&
+            targetClientId === appState.traktCredentials.discordClientId &&
+            appState.rpc?.transport.isConnected
+        ) {
+            return true;
+        }
+
+        if (!targetClientId) {
+            return true;
+        }
+
+        updateTraktCredentials({
+            ...appState.traktCredentials,
+            discordClientId: targetClientId,
+        });
+
+        if (appState.rpc) {
+            appState.rpc.destroy();
+            updateRPC(null);
+        }
+
+        await this.discordRPC.spawnRPC(this);
+        return false;
     }
 }
