@@ -19,12 +19,8 @@ function checkEnvironmentVariables() {
     const requiredEnvVars = ['TRAKT_CLIENT_ID', 'TRAKT_CLIENT_SECRET'];
     const missing = requiredEnvVars.filter((key) => !process.env[key]);
 
-    const hasMovieDiscordId = Boolean(
-        process.env.MOVIE_DISCORD_CLIENT_ID || process.env.DISCORD_CLIENT_ID
-    );
-    const hasSeriesDiscordId = Boolean(
-        process.env.SERIES_DISCORD_CLIENT_ID || process.env.DISCORD_CLIENT_ID
-    );
+    const hasMovieDiscordId = Boolean(process.env.MOVIE_DISCORD_CLIENT_ID);
+    const hasSeriesDiscordId = Boolean(process.env.SERIES_DISCORD_CLIENT_ID);
 
     if (!hasMovieDiscordId) {
         missing.push('MOVIE_DISCORD_CLIENT_ID');
