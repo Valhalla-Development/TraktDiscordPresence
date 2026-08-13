@@ -1,10 +1,34 @@
 import chalk from 'chalk';
 import { type Options, type Params, SingleBar } from 'cli-progress';
 import { DateTime } from 'luxon';
-import { appState } from '../state/appState.ts';
 import { ConnectionState, type ProgressBarPayload } from '../types/index.d';
 
 let progressBar: SingleBar | null = null;
+let instanceState: ConnectionState = ConnectionState.Disconnected;
+let countdownTimer = 15;
+let lastErrorMessage: string | null = null;
+
+export function setInstanceState(state: ConnectionState, payload?: ProgressBarPayload): void {
+    instanceState = state;
+    if (state === ConnectionState.Connected) {
+        lastErrorMessage = null;
+    }
+    if (payload?.error) {
+        lastErrorMessage = payload.error;
+    }
+    if (state === ConnectionState.Playing && !payload) {
+        return;
+    }
+    updateProgressBar(payload);
+}
+
+export function setCountdownTimer(seconds: number): void {
+    countdownTimer = seconds;
+}
+
+export function getLastErrorMessage(): string | null {
+    return lastErrorMessage;
+}
 
 export function initializeProgressBar(): void {
     if (!progressBar) {
@@ -15,7 +39,7 @@ export function initializeProgressBar(): void {
 
 export function generateProgressBar(): SingleBar {
     const formatFunction = (options: Options, params: Params, payload: ProgressBarPayload) => {
-        switch (appState.instanceState) {
+        switch (instanceState) {
             case ConnectionState.Connecting:
                 return chalk.yellow('🔄 Initializing application...');
             case ConnectionState.Connected:
@@ -30,13 +54,13 @@ export function generateProgressBar(): SingleBar {
                 );
             case ConnectionState.Disconnected:
                 return chalk.red(
-                    `⚠️ Discord connection lost. Retrying in ${chalk.blue(appState.countdownTimer.toString())} seconds...`
+                    `⚠️ Discord connection lost. Retrying in ${chalk.blue(countdownTimer.toString())} seconds...`
                 );
             case ConnectionState.Error: {
-                const errorMessage = payload.error || appState.lastErrorMessage || 'Unknown error';
+                const errorMessage = payload.error || lastErrorMessage || 'Unknown error';
 
                 return chalk.red(
-                    `❌ Error: ${errorMessage} Retrying in ${chalk.blue(appState.countdownTimer.toString())} seconds...`
+                    `❌ Error: ${errorMessage} Retrying in ${chalk.blue(countdownTimer.toString())} seconds...`
                 );
             }
             default:
@@ -64,7 +88,7 @@ export function updateProgressBar(payload?: ProgressBarPayload): void {
     }
 
     if (
-        appState.instanceState === ConnectionState.Playing &&
+        instanceState === ConnectionState.Playing &&
         payload?.content &&
         payload?.startedAt &&
         payload?.endsAt &&

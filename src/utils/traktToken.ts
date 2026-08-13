@@ -1,6 +1,5 @@
 import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
-import { appState, updateTraktCredentials } from '../state/appState.ts';
 import type { Configuration, TraktToken } from '../types/index.d';
 
 const AUTH_FILE = path.join('auth.json');
@@ -63,14 +62,10 @@ export function readAuth(): TraktToken | null {
     }
 }
 
-export function persistToken(token: TraktToken, config?: Configuration): void {
+export function persistToken(token: TraktToken, config: Configuration): Configuration {
     writeFileSync(AUTH_FILE, JSON.stringify(token, null, 2));
-    const base = config ?? appState.traktCredentials;
-    if (!base) {
-        throw new Error('Trakt credentials not found');
-    }
-    updateTraktCredentials({
-        ...base,
+    return {
+        ...config,
         oAuth: token,
-    });
+    };
 }

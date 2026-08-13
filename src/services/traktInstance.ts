@@ -1,25 +1,36 @@
 import chalk from 'chalk';
 // @ts-expect-error [currently, no types file exists for trakt.tv, so this will cause an error]
 import Trakt from 'trakt.tv';
-import { appState } from '../state/appState.ts';
-import type { Movie, TraktToken, TvShow } from '../types/index.d';
+import type { Configuration, Movie, TraktToken, TvShow } from '../types/index.d';
 import { persistToken, shouldRefreshToken } from '../utils/traktToken.ts';
 
 export class TraktInstance {
     private trakt: Trakt;
+    private config: Configuration;
+    private readonly onConfig?: (config: Configuration) => void;
+
+    constructor(config: Configuration, onConfig?: (config: Configuration) => void) {
+        this.config = config;
+        this.onConfig = onConfig;
+    }
+
+    getConfig(): Configuration {
+        return this.config;
+    }
+
+    setConfig(config: Configuration): void {
+        this.config = config;
+        this.onConfig?.(config);
+    }
 
     async createTrakt(): Promise<void> {
-        if (!appState.traktCredentials) {
-            throw new Error('Trakt credentials not found');
-        }
-
         this.trakt = new Trakt({
-            client_id: appState.traktCredentials.clientId,
-            client_secret: appState.traktCredentials.clientSecret,
+            client_id: this.config.clientId,
+            client_secret: this.config.clientSecret,
         });
 
-        if (appState.traktCredentials.oAuth) {
-            const token = appState.traktCredentials.oAuth;
+        if (this.config.oAuth) {
+            const token = this.config.oAuth;
 
             if (shouldRefreshToken(token)) {
                 console.warn(
@@ -28,7 +39,7 @@ export class TraktInstance {
                 try {
                     await this.trakt.import_token(token);
                     const newToken = await this.refreshToken();
-                    persistToken(newToken);
+                    this.setConfig(persistToken(newToken, this.config));
                     return;
                 } catch (refreshError) {
                     console.error(chalk.red('Token refresh failed:'), refreshError);

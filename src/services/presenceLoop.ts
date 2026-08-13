@@ -1,12 +1,6 @@
-import {
-    appState,
-    updateInstanceState,
-    updateLastErrorMessage,
-    updateTraktCredentials,
-} from '../state/appState.ts';
 import { ConnectionState, type Movie, type TraktContent, type TvShow } from '../types/index.d';
 import { getMovieImage, getShowImages } from '../utils/getContentDetails.ts';
-import { updateProgressBar } from '../utils/progressBar.ts';
+import { setInstanceState, updateProgressBar } from '../utils/progressBar.ts';
 import type { DiscordRPC } from './discordRPC.ts';
 import type { TraktInstance } from './traktInstance.ts';
 
@@ -29,11 +23,9 @@ export class PresenceLoop {
     async tick(): Promise<void> {
         try {
             if (!this.discordRPC.isConnected()) {
-                updateInstanceState(ConnectionState.Disconnected);
                 const errorMsg =
                     'Discord is not running or RPC connection was lost. Attempting to reconnect...';
-                updateLastErrorMessage(errorMsg);
-                updateProgressBar({
+                setInstanceState(ConnectionState.Disconnected, {
                     error: errorMsg,
                 });
                 this.discordRPC.scheduleReconnect();
@@ -54,19 +46,16 @@ export class PresenceLoop {
                 }
 
                 await this.handleWatchingContent(watching);
-                updateInstanceState(ConnectionState.Playing);
+                setInstanceState(ConnectionState.Playing);
             } else {
-                updateInstanceState(ConnectionState.NotPlaying);
-                updateProgressBar();
+                setInstanceState(ConnectionState.NotPlaying);
 
                 // Clear the Discord activity when nothing is playing
                 await this.discordRPC.clearActivity();
             }
         } catch (error) {
-            updateInstanceState(ConnectionState.Error);
             const errorMsg = `Failed to update status: ${error}.`;
-            updateLastErrorMessage(errorMsg);
-            updateProgressBar({ error: errorMsg });
+            setInstanceState(ConnectionState.Error, { error: errorMsg });
             if (!this.discordRPC.isConnected()) {
                 this.discordRPC.scheduleReconnect();
             }
@@ -224,18 +213,13 @@ export class PresenceLoop {
     }
 
     private async ensureDiscordClientForContent(contentType: 'movie' | 'show'): Promise<boolean> {
-        if (!appState.traktCredentials) {
-            throw new Error('Trakt credentials not found');
-        }
-
+        const config = this.trakt.getConfig();
         const targetClientId =
-            contentType === 'movie'
-                ? appState.traktCredentials.movieDiscordClientId
-                : appState.traktCredentials.seriesDiscordClientId;
+            contentType === 'movie' ? config.movieDiscordClientId : config.seriesDiscordClientId;
 
         if (
             targetClientId &&
-            targetClientId === appState.traktCredentials.discordClientId &&
+            targetClientId === config.discordClientId &&
             this.discordRPC.isConnected()
         ) {
             return true;
@@ -245,8 +229,8 @@ export class PresenceLoop {
             return true;
         }
 
-        updateTraktCredentials({
-            ...appState.traktCredentials,
+        this.trakt.setConfig({
+            ...config,
             discordClientId: targetClientId,
         });
 

@@ -1,31 +1,35 @@
 import { Client } from '@xhayper/discord-rpc';
 import chalk from 'chalk';
-import {
-    appState,
-    updateCountdownTimer,
-    updateInstanceState,
-    updateLastErrorMessage,
-    updateRPC,
-} from '../state/appState.ts';
 import { ConnectionState, type TraktContent } from '../types/index.d';
-import { updateProgressBar } from '../utils/progressBar.ts';
+import {
+    getLastErrorMessage,
+    setCountdownTimer,
+    setInstanceState,
+    updateProgressBar,
+} from '../utils/progressBar.ts';
 
 const RETRY_DELAY_SECONDS = 15;
 
 export class DiscordRPC {
+    private rpc: Client | null = null;
     private statusInterval: NodeJS.Timeout | null = null;
     private retryTimer: NodeJS.Timeout | null = null;
     private session = 0;
     private connecting = false;
     private lifecycle: 'alive' | 'destroyed' = 'alive';
     private onStatus: (() => Promise<void>) | null = null;
+    private readonly getClientId: () => string;
+
+    constructor(getClientId: () => string) {
+        this.getClientId = getClientId;
+    }
 
     setStatusHandler(handler: () => Promise<void>): void {
         this.onStatus = handler;
     }
 
     isConnected(): boolean {
-        return Boolean(appState.rpc?.transport.isConnected);
+        return Boolean(this.rpc?.transport.isConnected);
     }
 
     async setActivity(
@@ -34,11 +38,11 @@ export class DiscordRPC {
             type?: number;
         }
     ): Promise<void> {
-        await appState.rpc?.user?.setActivity(activity);
+        await this.rpc?.user?.setActivity(activity);
     }
 
     async clearActivity(): Promise<void> {
-        await appState.rpc?.user?.clearActivity();
+        await this.rpc?.user?.clearActivity();
     }
 
     async spawnRPC(): Promise<void> {
@@ -56,16 +60,16 @@ export class DiscordRPC {
         let rpc: Client | null = null;
 
         try {
-            if (!appState.traktCredentials) {
-                updateInstanceState(ConnectionState.Error);
-                const errorMsg = 'Trakt credentials not found.';
-                updateLastErrorMessage(errorMsg);
-                updateProgressBar({ error: errorMsg });
+            const clientId = this.getClientId();
+            if (!clientId) {
+                setInstanceState(ConnectionState.Error, {
+                    error: 'Trakt credentials not found.',
+                });
                 return;
             }
 
             rpc = new Client({
-                clientId: appState.traktCredentials.discordClientId,
+                clientId,
                 transport: { type: 'ipc' },
             });
 
@@ -73,9 +77,7 @@ export class DiscordRPC {
                 if (session !== this.session) {
                     return;
                 }
-                updateInstanceState(ConnectionState.Connected);
-                updateLastErrorMessage(null);
-                updateProgressBar();
+                setInstanceState(ConnectionState.Connected);
             });
 
             await rpc.login();
@@ -86,7 +88,7 @@ export class DiscordRPC {
                 return;
             }
 
-            updateRPC(rpc);
+            this.rpc = rpc;
             rpc = null;
             this.connecting = false;
 
@@ -110,10 +112,8 @@ export class DiscordRPC {
 
             this.connecting = false;
             this.destroyRpcClient();
-            updateInstanceState(ConnectionState.Error);
             const errorMessage = 'Discord is not running or RPC connection failed.';
-            updateLastErrorMessage(errorMessage);
-            updateProgressBar({ error: errorMessage });
+            setInstanceState(ConnectionState.Error, { error: errorMessage });
             this.scheduleReconnect();
         } finally {
             if (session === this.session) {
@@ -148,8 +148,9 @@ export class DiscordRPC {
         this.clearStatusInterval();
         this.destroyRpcClient();
 
-        const errorPayload = { error: appState.lastErrorMessage || 'Connection failed' };
-        updateCountdownTimer(RETRY_DELAY_SECONDS);
+        const errorPayload = { error: getLastErrorMessage() || 'Connection failed' };
+        let remaining = RETRY_DELAY_SECONDS;
+        setCountdownTimer(remaining);
         updateProgressBar(errorPayload);
 
         this.retryTimer = setInterval(async () => {
@@ -158,9 +159,9 @@ export class DiscordRPC {
                 return;
             }
 
-            const remaining = appState.countdownTimer - 1;
+            remaining -= 1;
             if (remaining > 0) {
-                updateCountdownTimer(remaining);
+                setCountdownTimer(remaining);
                 updateProgressBar(errorPayload);
                 return;
             }
@@ -195,12 +196,12 @@ export class DiscordRPC {
     }
 
     private destroyRpcClient(): void {
-        if (!appState.rpc) {
+        if (!this.rpc) {
             return;
         }
 
-        appState.rpc.destroy();
-        updateRPC(null);
+        this.rpc.destroy();
+        this.rpc = null;
     }
 
     private clearStatusInterval(): void {
