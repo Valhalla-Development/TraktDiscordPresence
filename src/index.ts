@@ -2,14 +2,8 @@ import chalk from 'chalk';
 import { DiscordRPC } from './services/discordRPC.ts';
 import { PresenceLoop } from './services/presenceLoop.ts';
 import { TraktInstance } from './services/traktInstance.ts';
-import {
-    appState,
-    updateInstanceState,
-    updateTraktCredentials,
-    updateTraktInstance,
-} from './state/appState.js';
 import { type Configuration, ConnectionState } from './types/index.d';
-import { initializeProgressBar } from './utils/progressBar.js';
+import { initializeProgressBar, setInstanceState } from './utils/progressBar.ts';
 import {
     MAX_SETTIMEOUT_MS,
     persistToken,
@@ -18,11 +12,15 @@ import {
     shouldRefreshToken,
 } from './utils/traktToken.ts';
 
-const discordRPC = new DiscordRPC();
+let config: Configuration;
+let trakt: TraktInstance | null = null;
+const discordRPC = new DiscordRPC(() => config.discordClientId);
 let refreshTimeoutId: NodeJS.Timeout | null = null;
 
-function createTraktInstance(): TraktInstance {
-    return new TraktInstance();
+function createTraktInstance(nextConfig: Configuration): TraktInstance {
+    return new TraktInstance(nextConfig, (updated) => {
+        config = updated;
+    });
 }
 
 function loadConfig(): Configuration {
@@ -54,8 +52,8 @@ function loadConfig(): Configuration {
 }
 
 async function scheduleNextRefresh(): Promise<void> {
-    const token = appState.traktCredentials?.oAuth;
-    if (!(appState.traktInstance && token)) {
+    const token = config.oAuth;
+    if (!(trakt && token)) {
         return;
     }
 
@@ -68,7 +66,7 @@ async function scheduleNextRefresh(): Promise<void> {
     let delay = remainingMs(token);
     if (delay <= 0) {
         await refreshAndSaveToken();
-        const nextToken = appState.traktCredentials?.oAuth;
+        const nextToken = config.oAuth;
         if (nextToken && remainingMs(nextToken) > 0) {
             await scheduleNextRefresh();
         }
@@ -93,33 +91,27 @@ async function scheduleNextRefresh(): Promise<void> {
 
 async function refreshAndSaveToken(): Promise<void> {
     try {
-        if (!appState.traktInstance) {
+        if (!trakt) {
             // Create a new instance if it doesn't exist
-            const traktInstance = createTraktInstance();
-            await traktInstance.createTrakt();
-            updateTraktInstance(traktInstance);
+            trakt = createTraktInstance(config);
+            await trakt.createTrakt();
         }
 
         // Only refresh if needed
-        if (shouldRefreshToken(appState.traktCredentials?.oAuth)) {
-            const newToken = await appState.traktInstance!.refreshToken();
+        if (shouldRefreshToken(config.oAuth)) {
+            const newToken = await trakt.refreshToken();
 
             // Validate the new token
-            if (!(newToken?.access_token && newToken.refresh_token)) {
+            if (!(newToken.access_token && newToken.refresh_token)) {
                 throw new Error('Invalid token received from refresh');
             }
 
-            persistToken(newToken);
+            trakt.setConfig(persistToken(newToken, config));
         }
-    } catch (refreshError) {
+    } catch {
         // If refresh fails, attempt to re-authenticate
         try {
-            if (!appState.traktCredentials) {
-                throw new Error('Authentication failed: No credentials available', {
-                    cause: refreshError,
-                });
-            }
-            await authoriseTrakt(appState.traktCredentials);
+            await authoriseTrakt(config);
         } catch (authError) {
             console.error(
                 chalk.red('Authentication failed. Please check your credentials and try again.'),
@@ -136,18 +128,17 @@ async function setupTokenRefresh(): Promise<void> {
     await scheduleNextRefresh();
 }
 
-async function authoriseTrakt(config: Configuration): Promise<void> {
-    if (!appState.traktInstance) {
-        const traktInstance = createTraktInstance();
-        await traktInstance.createTrakt();
-        updateTraktInstance(traktInstance);
+async function authoriseTrakt(nextConfig: Configuration): Promise<void> {
+    if (!trakt) {
+        trakt = createTraktInstance(nextConfig);
+        await trakt.createTrakt();
     }
 
     try {
         console.log(chalk.blue('\nStarting device authentication flow...'));
-        const token = await appState.traktInstance!.getDeviceAuthentication();
+        const token = await trakt.getDeviceAuthentication();
 
-        persistToken(token, config);
+        trakt.setConfig(persistToken(token, trakt.getConfig()));
 
         console.log(chalk.green('\nAuthentication token saved successfully'));
 
@@ -161,21 +152,20 @@ async function authoriseTrakt(config: Configuration): Promise<void> {
 
 async function ensureAuthentication(): Promise<void> {
     try {
-        const config = loadConfig();
+        config = loadConfig();
 
         // Check for stored token first
         const storedToken = readAuth();
         if (storedToken) {
             try {
-                updateTraktCredentials({
+                config = {
                     ...config,
                     oAuth: storedToken,
-                });
+                };
 
                 // Initialize the TraktInstance
-                const traktInstance = createTraktInstance();
-                await traktInstance.createTrakt();
-                updateTraktInstance(traktInstance);
+                trakt = createTraktInstance(config);
+                await trakt.createTrakt();
 
                 // Set up token refresh (immediately and every 20 hours)
                 await setupTokenRefresh();
@@ -187,7 +177,6 @@ async function ensureAuthentication(): Promise<void> {
         }
 
         // No valid stored token, need to authenticate
-        updateTraktCredentials(config);
         await authoriseTrakt(config);
 
         // After initial authentication, set up token refresh
@@ -204,14 +193,12 @@ async function ensureAuthentication(): Promise<void> {
 }
 
 async function startApplication(): Promise<void> {
-    updateInstanceState(ConnectionState.Connecting);
+    setInstanceState(ConnectionState.Connecting);
     initializeProgressBar();
 
-    let trakt = appState.traktInstance;
     if (!trakt) {
-        trakt = createTraktInstance();
+        trakt = createTraktInstance(config);
         await trakt.createTrakt();
-        updateTraktInstance(trakt);
     }
 
     const presenceLoop = new PresenceLoop(trakt, discordRPC);
@@ -221,9 +208,6 @@ async function startApplication(): Promise<void> {
 
 function cleanup() {
     discordRPC.destroy();
-    if (appState.retryInterval) {
-        clearInterval(appState.retryInterval);
-    }
     if (refreshTimeoutId) {
         clearTimeout(refreshTimeoutId);
     }
