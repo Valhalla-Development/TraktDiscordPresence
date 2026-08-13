@@ -2,38 +2,36 @@
   "name": "traktdiscordpresence",
   "version": "3.3.5",
   "description": "Set your Discord presence according to what you are watching on Trakt.tv",
-  "license": "GPL-3.0-or-later",
-  "author": "Ragnar Lothbrok <ragnarlothbrokjr@proton.me>",
   "homepage": "https://github.com/Valhalla-Development/TraktDiscordPresence#readme",
-  "repository": "https://github.com/RagnarLothbrok-Odin/TraktDiscordPresence.git",
   "bugs": {
     "url": "https://github.com/Valhalla-Development/TraktDiscordPresence/issues"
   },
+  "repository": "https://github.com/RagnarLothbrok-Odin/TraktDiscordPresence.git",
+  "license": "GPL-3.0-or-later",
+  "author": "Ragnar Lothbrok <ragnarlothbrokjr@proton.me>",
   "type": "module",
   "scripts": {
+    "dev": "bun --watch src/index.ts",
     "lint": "tsc --noEmit -p tsconfig.json && biome check --files-ignore-unknown=true --diagnostic-level=error --no-errors-on-unmatched src",
     "lint:fix": "biome check --write --no-errors-on-unmatched --files-ignore-unknown=true src",
-    "dev": "bun --watch src/index.ts",
     "start": "bun src/index.ts",
     "test:movie": "bun src/index.ts --test movie",
     "test:show": "bun src/index.ts --test show",
     "type-check": "tsc --noEmit"
   },
   "dependencies": {
-    "@types/luxon": "^3.7.4",
     "@xhayper/discord-rpc": "^1.3.4",
     "chalk": "^6.0.0",
     "cli-progress": "^3.12.0",
-    "colors": "^1.4.0",
     "lru-cache": "^11.5.2",
     "luxon": "^3.7.2",
-    "pretty-ms": "^9.3.0",
     "tmdb-ts": "^2.3.0",
     "trakt.tv": "^8.2.0"
   },
   "devDependencies": {
     "@biomejs/biome": "^2.5.8",
     "@types/cli-progress": "^3.11.6",
+    "@types/luxon": "^3.7.4",
     "typescript": "^7.0.2",
     "ultracite": "^7.10.3"
   }
