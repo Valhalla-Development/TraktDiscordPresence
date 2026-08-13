@@ -2,7 +2,7 @@ import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 import type { Configuration, TraktToken } from '../types/index.d';
 
-const AUTH_FILE = path.join('auth.json');
+const AUTH_FILE = path.resolve(import.meta.dirname, '../../auth.json');
 
 const REFRESH_BUFFER_MS = 60 * 60 * 1000; // 1 hour buffer before expiration
 // Node setTimeout only accepts a 32-bit signed delay
