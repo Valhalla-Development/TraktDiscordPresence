@@ -22,7 +22,7 @@ const tmdb = process.env.TMDB_API_KEY ? new TMDB(process.env.TMDB_API_KEY) : nul
  * Fetches season poster and episode image from TMDB
  */
 export async function getShowImages(
-    tmdbId: string,
+    tmdbId: number,
     seasonNumber: number,
     episodeNumber: number
 ): Promise<{ seasonImage: string; episodeImage: string | null } | null> {
@@ -48,7 +48,7 @@ export async function getShowImages(
     try {
         const seasonData = await tmdb.tvSeasons.details({
             seasonNumber,
-            tvShowID: Number.parseInt(tmdbId, 10),
+            tvShowID: tmdbId,
         });
 
         if (seasonData.poster_path) {
@@ -81,7 +81,7 @@ export async function getShowImages(
 /**
  * Fetches movie poster from TMDB
  */
-export async function getMovieImage(tmdbId: string): Promise<string | null> {
+export async function getMovieImage(tmdbId: number): Promise<string | null> {
     if (!tmdb) {
         return null;
     }
@@ -95,7 +95,7 @@ export async function getMovieImage(tmdbId: string): Promise<string | null> {
     }
 
     try {
-        const movieData = await tmdb.movies.details(Number.parseInt(tmdbId, 10));
+        const movieData = await tmdb.movies.details(tmdbId);
 
         if (movieData.poster_path) {
             const movieImageUrl = `https://image.tmdb.org/t/p/w500${movieData.poster_path}`;
