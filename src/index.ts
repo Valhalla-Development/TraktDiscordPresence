@@ -130,17 +130,19 @@ async function refreshAndSaveToken(): Promise<void> {
                 updateTraktCredentials(updatedConfig);
             }
         }
-    } catch (_error) {
+    } catch (refreshError) {
         // If refresh fails, attempt to re-authenticate
         try {
-            if (appState.traktCredentials) {
-                await authoriseTrakt(appState.traktCredentials);
-            } else {
-                throw new Error('Authentication failed: No credentials available');
+            if (!appState.traktCredentials) {
+                throw new Error('Authentication failed: No credentials available', {
+                    cause: refreshError,
+                });
             }
-        } catch (_authError) {
+            await authoriseTrakt(appState.traktCredentials);
+        } catch (authError) {
             console.error(
-                chalk.red('Authentication failed. Please check your credentials and try again.')
+                chalk.red('Authentication failed. Please check your credentials and try again.'),
+                authError
             );
             cleanup();
             process.exit(1);

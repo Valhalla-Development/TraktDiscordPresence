@@ -1,24 +1,23 @@
-export type Configuration = {
+export interface Configuration {
     clientId: string;
     clientSecret: string;
     discordClientId: string;
     movieDiscordClientId: string;
-    seriesDiscordClientId: string;
     oAuth?: string;
-};
+    seriesDiscordClientId: string;
+}
 
-export type TraktContent = {
-    smallImageKey: string;
-    largeImageKey: string;
-    startTimestamp: Date;
-    endTimestamp?: Date;
+export interface TraktContent {
     details?: string;
+    endTimestamp?: Date;
+    largeImageKey: string;
+    smallImageKey: string;
+    startTimestamp: Date;
     state?: string;
-};
+}
 
-export type Movie = {
+export interface Movie {
     expires_at: string;
-    started_at: string;
     movie: {
         title: string;
         year: number;
@@ -26,18 +25,10 @@ export type Movie = {
             tmdb: string;
         };
     };
-};
-
-export type TvShow = {
-    expires_at: string;
     started_at: string;
-    show: {
-        title: string;
-        ids: {
-            tmdb: string;
-        };
-        year: number;
-    };
+}
+
+export interface TvShow {
     episode: {
         season: number;
         number: number;
@@ -46,30 +37,39 @@ export type TvShow = {
             tmdb: string;
         };
     };
-};
+    expires_at: string;
+    show: {
+        title: string;
+        ids: {
+            tmdb: string;
+        };
+        year: number;
+    };
+    started_at: string;
+}
 
-export type TraktToken = {
+export interface TraktToken {
     access_token: string;
+    created_at: number;
     expires_in: number;
     refresh_token: string;
-    created_at: number;
-};
+}
 
-export type ProgressBarPayload = {
+export interface ProgressBarPayload {
     content?: string;
-    startedAt?: string;
     endsAt?: string;
-    type?: string;
     error?: string;
-};
+    startedAt?: string;
+    type?: string;
+}
 
 export const ConnectionState = {
-    Playing: 0,
-    NotPlaying: 1,
     Connected: 2,
-    Disconnected: 3,
     Connecting: 4,
+    Disconnected: 3,
     Error: 5,
+    NotPlaying: 1,
+    Playing: 0,
 } as const;
 
 export type ConnectionState = (typeof ConnectionState)[keyof typeof ConnectionState];

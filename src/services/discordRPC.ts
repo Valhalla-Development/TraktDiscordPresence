@@ -18,10 +18,10 @@ export class DiscordRPC {
     private retryTimer: NodeJS.Timeout | null = null;
     private session = 0;
     private connecting = false;
-    private destroyed = false;
+    private lifecycle: 'alive' | 'destroyed' = 'alive';
 
     async spawnRPC(trakt: TraktInstance): Promise<void> {
-        if (this.destroyed || this.connecting) {
+        if (this.lifecycle === 'destroyed' || this.connecting) {
             return;
         }
 
@@ -49,7 +49,7 @@ export class DiscordRPC {
             });
 
             rpc.on('ready', () => {
-                if (session !== this.session || this.destroyed) {
+                if (session !== this.session) {
                     return;
                 }
                 updateInstanceState(ConnectionState.Connected);
@@ -59,7 +59,7 @@ export class DiscordRPC {
 
             await rpc.login();
 
-            if (session !== this.session || this.destroyed) {
+            if (session !== this.session) {
                 rpc.destroy();
                 rpc = null;
                 return;
@@ -84,11 +84,11 @@ export class DiscordRPC {
                 await trakt.updateStatus();
                 this.startStatusLoop(session, () => trakt.updateStatus(), 15_000);
             }
-        } catch (_err) {
+        } catch {
             rpc?.destroy();
             rpc = null;
 
-            if (session !== this.session || this.destroyed) {
+            if (session !== this.session) {
                 return;
             }
 
@@ -111,7 +111,7 @@ export class DiscordRPC {
      * Used when switching movie/series Discord application IDs.
      */
     async reconnect(trakt: TraktInstance): Promise<void> {
-        if (this.destroyed) {
+        if (this.lifecycle === 'destroyed') {
             return;
         }
 
@@ -125,7 +125,7 @@ export class DiscordRPC {
      * so watching updates cannot stack Discord clients.
      */
     scheduleReconnect(trakt: TraktInstance): void {
-        if (this.destroyed || this.connecting || this.retryTimer) {
+        if (this.lifecycle === 'destroyed' || this.connecting || this.retryTimer) {
             return;
         }
 
@@ -137,7 +137,7 @@ export class DiscordRPC {
         updateProgressBar(errorPayload);
 
         this.retryTimer = setInterval(async () => {
-            if (this.destroyed) {
+            if (this.lifecycle === 'destroyed') {
                 this.clearRetryTimer();
                 return;
             }
@@ -155,7 +155,8 @@ export class DiscordRPC {
     }
 
     destroy(): void {
-        this.destroyed = true;
+        this.lifecycle = 'destroyed';
+        this.session += 1;
         this.connecting = false;
         this.clearStatusInterval();
         this.clearRetryTimer();
@@ -163,7 +164,7 @@ export class DiscordRPC {
     }
 
     private startStatusLoop(session: number, tick: () => void, intervalMs: number): void {
-        if (session !== this.session || this.destroyed || this.retryTimer) {
+        if (session !== this.session || this.retryTimer) {
             return;
         }
 

@@ -12,8 +12,8 @@ const contentCache = new LRUCache<
 >({
     max: 50, // Maximum number of cached items
     ttl: 6 * 60 * 60 * 1000, // 6 hours TTL
-    updateAgeOnGet: true, // Reset TTL when item is accessed (keeps popular content fresh)
     ttlAutopurge: true, // Automatically remove expired items in background
+    updateAgeOnGet: true, // Reset TTL when item is accessed (keeps popular content fresh)
 });
 
 const tmdb = process.env.TMDB_API_KEY ? new TMDB(process.env.TMDB_API_KEY) : null;
@@ -38,17 +38,17 @@ export async function getShowImages(
         // Find episode from cached data
         const episode = cached.episodes?.find((ep) => ep.episode_number === episodeNumber);
         return {
-            seasonImage: cached.image,
             episodeImage: episode?.still_path
                 ? `https://image.tmdb.org/t/p/w500${episode.still_path}`
                 : null,
+            seasonImage: cached.image,
         };
     }
 
     try {
         const seasonData = await tmdb.tvSeasons.details({
-            tvShowID: Number.parseInt(tmdbId, 10),
             seasonNumber,
+            tvShowID: Number.parseInt(tmdbId, 10),
         });
 
         if (seasonData.poster_path) {
@@ -56,19 +56,19 @@ export async function getShowImages(
 
             // Cache the season data
             contentCache.set(cacheKey, {
-                type: 'season',
-                image: seasonImageUrl,
                 episodes: seasonData.episodes || [],
+                image: seasonImageUrl,
+                type: 'season',
             });
 
             // Find the specific episode
             const episode = seasonData.episodes?.find((ep) => ep.episode_number === episodeNumber);
 
             return {
-                seasonImage: seasonImageUrl,
                 episodeImage: episode?.still_path
                     ? `https://image.tmdb.org/t/p/w500${episode.still_path}`
                     : null,
+                seasonImage: seasonImageUrl,
             };
         }
     } catch (error) {
@@ -102,8 +102,8 @@ export async function getMovieImage(tmdbId: string): Promise<string | null> {
 
             // Cache the movie data
             contentCache.set(cacheKey, {
-                type: 'movie',
                 image: movieImageUrl,
+                type: 'movie',
             });
 
             return movieImageUrl;

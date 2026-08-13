@@ -33,7 +33,7 @@ export function generateProgressBar(): SingleBar {
                     `⚠️ Discord connection lost. Retrying in ${chalk.blue(appState.countdownTimer.toString())} seconds...`
                 );
             case ConnectionState.Error: {
-                const errorMessage = payload?.error || appState.lastErrorMessage || 'Unknown error';
+                const errorMessage = payload.error || appState.lastErrorMessage || 'Unknown error';
 
                 return chalk.red(
                     `❌ Error: ${errorMessage} Retrying in ${chalk.blue(appState.countdownTimer.toString())} seconds...`
@@ -47,14 +47,14 @@ export function generateProgressBar(): SingleBar {
     };
 
     return new SingleBar({
-        format: formatFunction,
         barCompleteChar: '█',
         barIncompleteChar: '░',
-        hideCursor: true,
         clearOnComplete: false,
-        linewrap: true,
-        fps: 1,
         forceRedraw: true,
+        format: formatFunction,
+        fps: 1,
+        hideCursor: true,
+        linewrap: true,
     });
 }
 

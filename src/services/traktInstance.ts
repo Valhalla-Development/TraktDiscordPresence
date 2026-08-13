@@ -1,7 +1,6 @@
 import chalk from 'chalk';
 // @ts-expect-error [currently, no types file exists for trakt.tv, so this will cause an error]
 import Trakt from 'trakt.tv';
-import { getMovieImage, getShowImages } from 'utils/getContentDetails.ts';
 import {
     appState,
     updateInstanceState,
@@ -15,6 +14,7 @@ import {
     type TraktToken,
     type TvShow,
 } from '../types/index.d';
+import { getMovieImage, getShowImages } from '../utils/getContentDetails.ts';
 import { updateProgressBar } from '../utils/progressBar.ts';
 import type { DiscordRPC } from './discordRPC.ts';
 
@@ -26,8 +26,8 @@ export class TraktInstance {
     // Track current content and its images
     private currentContentId: string | null = null;
     private currentImages: { small: string; large: string } = {
-        small: 'play',
         large: 'trakt',
+        small: 'play',
     };
 
     constructor(discordRPC: DiscordRPC) {
@@ -35,7 +35,7 @@ export class TraktInstance {
     }
 
     calculateTimeUntilRefresh(token: TraktToken): number {
-        if (!(token?.expires_in && token.created_at)) {
+        if (!(token.expires_in && token.created_at)) {
             return 0;
         }
 
@@ -89,7 +89,10 @@ export class TraktInstance {
                     return;
                 } catch (refreshError) {
                     console.error(chalk.red('Token refresh failed:'), refreshError);
-                    throw new Error('Token is invalid and refresh failed. Please re-authenticate.');
+                    throw new Error(
+                        'Token is invalid and refresh failed. Please re-authenticate.',
+                        { cause: refreshError }
+                    );
                 }
             }
 
@@ -133,9 +136,9 @@ export class TraktInstance {
                     '✓'
             );
             return token;
-        } catch {
+        } catch (error) {
             console.error(chalk.red('\nFAuthorization timed out. Please try again.'));
-            throw new Error('Authorization timed out. Please try again.');
+            throw new Error('Authorization timed out. Please try again.', { cause: error });
         }
     }
 
@@ -195,8 +198,8 @@ export class TraktInstance {
     private async handleWatchingContent(watching: Movie | TvShow): Promise<void> {
         // Create unique ID for current content
         const contentId = this.isMovie(watching)
-            ? `movie_${watching.movie.ids?.tmdb}`
-            : `episode_${watching.episode.ids?.tmdb}`;
+            ? `movie_${watching.movie.ids.tmdb}`
+            : `episode_${watching.episode.ids.tmdb}`;
 
         // Only fetch images if content changed
         if (contentId !== this.currentContentId) {
@@ -205,12 +208,12 @@ export class TraktInstance {
             try {
                 if (this.isMovie(watching)) {
                     // Movie - get movie poster
-                    const movieId = watching.movie.ids?.tmdb;
+                    const movieId = watching.movie.ids.tmdb;
                     if (movieId) {
                         const result = await getMovieImage(movieId);
                         this.currentImages = {
-                            small: 'play',
                             large: result || 'trakt',
+                            small: 'play',
                         };
                     }
                 } else {
@@ -223,8 +226,8 @@ export class TraktInstance {
                         const result = await getShowImages(seriesId, seasonId, episodeId);
 
                         this.currentImages = {
-                            small: result?.episodeImage || 'play',
                             large: result?.seasonImage || 'trakt',
+                            small: result?.episodeImage || 'play',
                         };
                     }
                 }
@@ -235,10 +238,10 @@ export class TraktInstance {
         }
 
         const traktContent: TraktContent = {
-            smallImageKey: this.currentImages.small,
-            largeImageKey: this.currentImages.large,
-            startTimestamp: new Date(watching.started_at),
             endTimestamp: new Date(watching.expires_at),
+            largeImageKey: this.currentImages.large,
+            smallImageKey: this.currentImages.small,
+            startTimestamp: new Date(watching.started_at),
         };
 
         if (this.isMovie(watching)) {
@@ -289,25 +292,25 @@ export class TraktInstance {
 
         updateProgressBar({
             content: detail,
-            startedAt: watching.started_at,
             endsAt: watching.expires_at,
+            startedAt: watching.started_at,
             type: 'Movie',
         });
 
         await appState.rpc?.user?.setActivity({
             ...traktContent,
-            details: detail,
-            type: 3,
             buttons: [
                 {
                     label: 'View on Trakt',
                     url: this.formatTraktUrl({
-                        type: 'movie',
                         title: movie.title,
+                        type: 'movie',
                         year: movie.year,
                     }),
                 },
             ],
+            details: detail,
+            type: 3,
         });
     }
 
@@ -318,61 +321,61 @@ export class TraktInstance {
 
         updateProgressBar({
             content: `${detail} - ${state}`,
-            startedAt: watching.started_at,
             endsAt: watching.expires_at,
+            startedAt: watching.started_at,
             type: 'TV Show',
         });
 
         await appState.rpc?.user?.setActivity({
             ...traktContent,
-            details: detail,
-            state,
-            type: 3,
             buttons: [
                 {
                     label: 'View on Trakt',
                     url: this.formatTraktUrl({
-                        type: 'show',
-                        title: show.title,
-                        season: episode.season,
                         episode: episode.number,
+                        season: episode.season,
+                        title: show.title,
+                        type: 'show',
                     }),
                 },
             ],
+            details: detail,
+            state,
+            type: 3,
         });
     }
 
     private generateTestWatchingData(type: 'movie' | 'show'): Movie | TvShow {
         const testMovie: Movie = {
             expires_at: new Date(Date.now() + 2 * 60 * 60 * 1000).toISOString(), // 2 hours from now
-            started_at: new Date(Date.now() - 30 * 60 * 1000).toISOString(), // 30 minutes ago
             movie: {
-                title: 'Interstellar',
-                year: 2014,
                 ids: {
                     tmdb: '157336',
                 },
+                title: 'Interstellar',
+                year: 2014,
             },
+            started_at: new Date(Date.now() - 30 * 60 * 1000).toISOString(), // 30 minutes ago
         };
 
         const testShow: TvShow = {
-            expires_at: new Date(Date.now() + 45 * 60 * 1000).toISOString(), // 45 minutes from now
-            started_at: new Date(Date.now() - 15 * 60 * 1000).toISOString(), // 15 minutes ago
-            show: {
-                title: 'Breaking Bad',
+            episode: {
                 ids: {
                     tmdb: '1396',
                 },
+                number: 16,
+                season: 5,
+                title: 'Felina',
+            },
+            expires_at: new Date(Date.now() + 45 * 60 * 1000).toISOString(), // 45 minutes from now
+            show: {
+                ids: {
+                    tmdb: '1396',
+                },
+                title: 'Breaking Bad',
                 year: 2008,
             },
-            episode: {
-                season: 5,
-                number: 16,
-                title: 'Felina',
-                ids: {
-                    tmdb: '1396',
-                },
-            },
+            started_at: new Date(Date.now() - 15 * 60 * 1000).toISOString(), // 15 minutes ago
         };
 
         if (type === 'movie') {
@@ -384,7 +387,7 @@ export class TraktInstance {
 
     private validateToken(token: TraktToken): boolean {
         try {
-            if (!(token?.access_token && token.refresh_token)) {
+            if (!(token.access_token && token.refresh_token)) {
                 return false;
             }
 

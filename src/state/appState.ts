@@ -2,23 +2,23 @@ import type { Client } from '@xhayper/discord-rpc';
 import type { TraktInstance } from '../services/traktInstance';
 import { type Configuration, ConnectionState } from '../types/index.d';
 
-export type AppState = {
-    instanceState: ConnectionState;
-    rpc: Client | null;
-    retryInterval: NodeJS.Timeout | null;
+export interface AppState {
     countdownTimer: number;
-    traktCredentials: Configuration | null;
+    instanceState: ConnectionState;
     lastErrorMessage: string | null;
+    retryInterval: NodeJS.Timeout | null;
+    rpc: Client | null;
+    traktCredentials: Configuration | null;
     traktInstance: TraktInstance | null;
-};
+}
 
 export const appState: AppState = {
-    instanceState: ConnectionState.Disconnected,
-    rpc: null,
-    retryInterval: null,
     countdownTimer: 15,
-    traktCredentials: null,
+    instanceState: ConnectionState.Disconnected,
     lastErrorMessage: null,
+    retryInterval: null,
+    rpc: null,
+    traktCredentials: null,
     traktInstance: null,
 };
 
