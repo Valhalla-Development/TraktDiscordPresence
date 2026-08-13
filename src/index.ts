@@ -1,5 +1,6 @@
 import chalk from 'chalk';
 import { DiscordRPC } from './services/discordRPC.ts';
+import { PresenceLoop } from './services/presenceLoop.ts';
 import { TraktInstance } from './services/traktInstance.ts';
 import {
     appState,
@@ -21,7 +22,7 @@ const discordRPC = new DiscordRPC();
 let refreshTimeoutId: NodeJS.Timeout | null = null;
 
 function createTraktInstance(): TraktInstance {
-    return new TraktInstance(discordRPC);
+    return new TraktInstance();
 }
 
 function loadConfig(): Configuration {
@@ -206,13 +207,16 @@ async function startApplication(): Promise<void> {
     updateInstanceState(ConnectionState.Connecting);
     initializeProgressBar();
 
-    if (!appState.traktInstance) {
-        const traktInstance = createTraktInstance();
-        await traktInstance.createTrakt();
-        updateTraktInstance(traktInstance);
+    let trakt = appState.traktInstance;
+    if (!trakt) {
+        trakt = createTraktInstance();
+        await trakt.createTrakt();
+        updateTraktInstance(trakt);
     }
 
-    await discordRPC.spawnRPC(appState.traktInstance!);
+    const presenceLoop = new PresenceLoop(trakt, discordRPC);
+    discordRPC.setStatusHandler(() => presenceLoop.tick());
+    await discordRPC.spawnRPC();
 }
 
 function cleanup() {

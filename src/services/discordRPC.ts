@@ -7,9 +7,8 @@ import {
     updateLastErrorMessage,
     updateRPC,
 } from '../state/appState.ts';
-import { ConnectionState } from '../types/index.d';
+import { ConnectionState, type TraktContent } from '../types/index.d';
 import { updateProgressBar } from '../utils/progressBar.ts';
-import type { TraktInstance } from './traktInstance.ts';
 
 const RETRY_DELAY_SECONDS = 15;
 
@@ -19,8 +18,30 @@ export class DiscordRPC {
     private session = 0;
     private connecting = false;
     private lifecycle: 'alive' | 'destroyed' = 'alive';
+    private onStatus: (() => Promise<void>) | null = null;
 
-    async spawnRPC(trakt: TraktInstance): Promise<void> {
+    setStatusHandler(handler: () => Promise<void>): void {
+        this.onStatus = handler;
+    }
+
+    isConnected(): boolean {
+        return Boolean(appState.rpc?.transport.isConnected);
+    }
+
+    async setActivity(
+        activity: TraktContent & {
+            buttons?: { label: string; url: string }[];
+            type?: number;
+        }
+    ): Promise<void> {
+        await appState.rpc?.user?.setActivity(activity);
+    }
+
+    async clearActivity(): Promise<void> {
+        await appState.rpc?.user?.clearActivity();
+    }
+
+    async spawnRPC(): Promise<void> {
         if (this.lifecycle === 'destroyed' || this.connecting) {
             return;
         }
@@ -69,20 +90,15 @@ export class DiscordRPC {
             rpc = null;
             this.connecting = false;
 
-            if (!appState.traktInstance) {
-                appState.traktInstance = trakt;
-            }
-
             const isTestMode = process.argv.includes('--test');
 
             if (isTestMode) {
-                const testType = this.parseTestType();
                 console.log(chalk.cyan('🧪 Running in test mode - simulating Trakt activity'));
-                await trakt.updateStatus(true, testType);
-                this.startStatusLoop(session, () => trakt.updateStatus(true, testType), 30_000);
+                await this.runStatus();
+                this.startStatusLoop(session, () => this.runStatus(), 30_000);
             } else {
-                await trakt.updateStatus();
-                this.startStatusLoop(session, () => trakt.updateStatus(), 15_000);
+                await this.runStatus();
+                this.startStatusLoop(session, () => this.runStatus(), 15_000);
             }
         } catch {
             rpc?.destroy();
@@ -98,7 +114,7 @@ export class DiscordRPC {
             const errorMessage = 'Discord is not running or RPC connection failed.';
             updateLastErrorMessage(errorMessage);
             updateProgressBar({ error: errorMessage });
-            this.scheduleReconnect(trakt);
+            this.scheduleReconnect();
         } finally {
             if (session === this.session) {
                 this.connecting = false;
@@ -110,21 +126,21 @@ export class DiscordRPC {
      * Tear down the current client and connect immediately.
      * Used when switching movie/series Discord application IDs.
      */
-    async reconnect(trakt: TraktInstance): Promise<void> {
+    async reconnect(): Promise<void> {
         if (this.lifecycle === 'destroyed') {
             return;
         }
 
         this.connecting = false;
         this.clearRetryTimer();
-        await this.spawnRPC(trakt);
+        await this.spawnRPC();
     }
 
     /**
      * Queue a single reconnect. No-ops if a connect or retry is already in flight
      * so watching updates cannot stack Discord clients.
      */
-    scheduleReconnect(trakt: TraktInstance): void {
+    scheduleReconnect(): void {
         if (this.lifecycle === 'destroyed' || this.connecting || this.retryTimer) {
             return;
         }
@@ -150,7 +166,7 @@ export class DiscordRPC {
             }
 
             this.clearRetryTimer();
-            await this.spawnRPC(trakt);
+            await this.spawnRPC();
         }, 1000);
     }
 
@@ -163,13 +179,19 @@ export class DiscordRPC {
         this.destroyRpcClient();
     }
 
-    private startStatusLoop(session: number, tick: () => void, intervalMs: number): void {
+    private async runStatus(): Promise<void> {
+        await this.onStatus?.();
+    }
+
+    private startStatusLoop(session: number, tick: () => Promise<void>, intervalMs: number): void {
         if (session !== this.session || this.retryTimer) {
             return;
         }
 
         this.clearStatusInterval();
-        this.statusInterval = setInterval(tick, intervalMs);
+        this.statusInterval = setInterval(async () => {
+            await tick();
+        }, intervalMs);
     }
 
     private destroyRpcClient(): void {
@@ -193,17 +215,5 @@ export class DiscordRPC {
             clearInterval(this.retryTimer);
             this.retryTimer = null;
         }
-    }
-
-    private parseTestType(): 'movie' | 'show' {
-        // Check which script was run
-        const scriptName = process.env.npm_lifecycle_event || '';
-
-        if (scriptName.includes('movie') || process.argv.includes('movie')) {
-            return 'movie';
-        }
-
-        // Return show
-        return 'show';
     }
 }
