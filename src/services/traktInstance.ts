@@ -6,8 +6,6 @@ import {
     appState,
     updateInstanceState,
     updateLastErrorMessage,
-    updateRetryInterval,
-    updateRPC,
     updateTraktCredentials,
 } from '../state/appState.ts';
 import {
@@ -18,7 +16,7 @@ import {
     type TvShow,
 } from '../types/index.d';
 import { updateProgressBar } from '../utils/progressBar.ts';
-import { DiscordRPC } from './discordRPC.ts';
+import type { DiscordRPC } from './discordRPC.ts';
 
 export class TraktInstance {
     private trakt: Trakt;
@@ -32,8 +30,8 @@ export class TraktInstance {
         large: 'trakt',
     };
 
-    constructor() {
-        this.discordRPC = new DiscordRPC();
+    constructor(discordRPC: DiscordRPC) {
+        this.discordRPC = discordRPC;
     }
 
     calculateTimeUntilRefresh(token: TraktToken): number {
@@ -151,11 +149,7 @@ export class TraktInstance {
                 updateProgressBar({
                     error: errorMsg,
                 });
-                if (appState.retryInterval) {
-                    clearInterval(appState.retryInterval);
-                    updateRetryInterval(null);
-                }
-                await this.discordRPC.spawnRPC(this);
+                this.discordRPC.scheduleReconnect(this);
                 return;
             }
 
@@ -192,11 +186,9 @@ export class TraktInstance {
             const errorMsg = `Failed to update status: ${error}.`;
             updateLastErrorMessage(errorMsg);
             updateProgressBar({ error: errorMsg });
-            if (appState.retryInterval) {
-                clearInterval(appState.retryInterval);
-                updateRetryInterval(null);
+            if (!appState.rpc?.transport.isConnected) {
+                this.discordRPC.scheduleReconnect(this);
             }
-            await this.handleUpdateFailure();
         }
     }
 
@@ -350,11 +342,6 @@ export class TraktInstance {
         });
     }
 
-    private async handleUpdateFailure(): Promise<void> {
-        updateInstanceState(ConnectionState.Disconnected);
-        await this.discordRPC.spawnRPC(this);
-    }
-
     private generateTestWatchingData(type: 'movie' | 'show'): Movie | TvShow {
         const testMovie: Movie = {
             expires_at: new Date(Date.now() + 2 * 60 * 60 * 1000).toISOString(), // 2 hours from now
@@ -441,12 +428,7 @@ export class TraktInstance {
             discordClientId: targetClientId,
         });
 
-        if (appState.rpc) {
-            appState.rpc.destroy();
-            updateRPC(null);
-        }
-
-        await this.discordRPC.spawnRPC(this);
+        await this.discordRPC.reconnect(this);
         return false;
     }
 }

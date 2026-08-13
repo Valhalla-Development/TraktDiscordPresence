@@ -5,18 +5,34 @@ import {
     updateCountdownTimer,
     updateInstanceState,
     updateLastErrorMessage,
-    updateRetryInterval,
     updateRPC,
 } from '../state/appState.ts';
 import { ConnectionState } from '../types/index.d';
 import { updateProgressBar } from '../utils/progressBar.ts';
 import type { TraktInstance } from './traktInstance.ts';
 
+const RETRY_DELAY_SECONDS = 15;
+
 export class DiscordRPC {
     private statusInterval: NodeJS.Timeout | null = null;
+    private retryTimer: NodeJS.Timeout | null = null;
+    private session = 0;
+    private connecting = false;
+    private destroyed = false;
 
     async spawnRPC(trakt: TraktInstance): Promise<void> {
+        if (this.destroyed || this.connecting) {
+            return;
+        }
+
+        const session = this.session + 1;
+        this.session = session;
+        this.connecting = true;
         this.clearStatusInterval();
+        this.clearRetryTimer();
+        this.destroyRpcClient();
+
+        let rpc: Client | null = null;
 
         try {
             if (!appState.traktCredentials) {
@@ -27,94 +43,154 @@ export class DiscordRPC {
                 return;
             }
 
-            const rpc = new Client({
+            rpc = new Client({
                 clientId: appState.traktCredentials.discordClientId,
                 transport: { type: 'ipc' },
             });
 
             rpc.on('ready', () => {
+                if (session !== this.session || this.destroyed) {
+                    return;
+                }
                 updateInstanceState(ConnectionState.Connected);
                 updateLastErrorMessage(null);
                 updateProgressBar();
             });
 
             await rpc.login();
-            updateRPC(rpc);
 
-            if (appState.retryInterval) {
-                clearInterval(appState.retryInterval);
-                updateRetryInterval(null);
+            if (session !== this.session || this.destroyed) {
+                rpc.destroy();
+                rpc = null;
+                return;
             }
+
+            updateRPC(rpc);
+            rpc = null;
+            this.connecting = false;
 
             if (!appState.traktInstance) {
                 appState.traktInstance = trakt;
             }
 
-            // Check if we're in test mode
             const isTestMode = process.argv.includes('--test');
 
             if (isTestMode) {
-                // Parse test type from arguments
                 const testType = this.parseTestType();
                 console.log(chalk.cyan('🧪 Running in test mode - simulating Trakt activity'));
-
-                await trakt.updateStatus(true, testType); // Pass test mode flag and type
-
-                // In test mode, update every 30 seconds to see changes
-                this.statusInterval = setInterval(() => trakt.updateStatus(true, testType), 30_000);
+                await trakt.updateStatus(true, testType);
+                this.startStatusLoop(session, () => trakt.updateStatus(true, testType), 30_000);
             } else {
                 await trakt.updateStatus();
-                this.statusInterval = setInterval(() => trakt.updateStatus(), 15_000);
+                this.startStatusLoop(session, () => trakt.updateStatus(), 15_000);
             }
         } catch (_err) {
-            this.clearStatusInterval();
+            rpc?.destroy();
+            rpc = null;
+
+            if (session !== this.session || this.destroyed) {
+                return;
+            }
+
+            this.connecting = false;
+            this.destroyRpcClient();
             updateInstanceState(ConnectionState.Error);
             const errorMessage = 'Discord is not running or RPC connection failed.';
-
-            // Store the error message in the app state
             updateLastErrorMessage(errorMessage);
             updateProgressBar({ error: errorMessage });
-            await this.handleConnectionFailure(trakt);
+            this.scheduleReconnect(trakt);
+        } finally {
+            if (session === this.session) {
+                this.connecting = false;
+            }
         }
     }
 
-    private handleConnectionFailure(trakt: TraktInstance): void {
-        const isDisconnected = appState.instanceState === ConnectionState.Disconnected;
-        const isError = appState.instanceState === ConnectionState.Error;
+    /**
+     * Tear down the current client and connect immediately.
+     * Used when switching movie/series Discord application IDs.
+     */
+    async reconnect(trakt: TraktInstance): Promise<void> {
+        if (this.destroyed) {
+            return;
+        }
 
-        // Store the current error message to reuse during countdown
-        const currentErrorPayload = { error: appState.lastErrorMessage || 'Connection failed' };
+        this.connecting = false;
+        this.clearRetryTimer();
+        await this.spawnRPC(trakt);
+    }
 
-        if (isDisconnected || isError) {
-            updateCountdownTimer(15);
-            if (appState.retryInterval) {
-                clearInterval(appState.retryInterval);
+    /**
+     * Queue a single reconnect. No-ops if a connect or retry is already in flight
+     * so watching updates cannot stack Discord clients.
+     */
+    scheduleReconnect(trakt: TraktInstance): void {
+        if (this.destroyed || this.connecting || this.retryTimer) {
+            return;
+        }
+
+        this.clearStatusInterval();
+        this.destroyRpcClient();
+
+        const errorPayload = { error: appState.lastErrorMessage || 'Connection failed' };
+        updateCountdownTimer(RETRY_DELAY_SECONDS);
+        updateProgressBar(errorPayload);
+
+        this.retryTimer = setInterval(async () => {
+            if (this.destroyed) {
+                this.clearRetryTimer();
+                return;
             }
-            const newInterval = setInterval(() => {
-                if (appState.countdownTimer > 0 && (isDisconnected || isError)) {
-                    updateCountdownTimer(appState.countdownTimer - 1);
-                    // Pass the stored error message during each update
-                    updateProgressBar(currentErrorPayload);
-                }
-            }, 1000);
-            updateRetryInterval(newInterval);
 
-            setTimeout(() => this.spawnRPC(trakt), 15_000);
+            const remaining = appState.countdownTimer - 1;
+            if (remaining > 0) {
+                updateCountdownTimer(remaining);
+                updateProgressBar(errorPayload);
+                return;
+            }
+
+            this.clearRetryTimer();
+            await this.spawnRPC(trakt);
+        }, 1000);
+    }
+
+    destroy(): void {
+        this.destroyed = true;
+        this.connecting = false;
+        this.clearStatusInterval();
+        this.clearRetryTimer();
+        this.destroyRpcClient();
+    }
+
+    private startStatusLoop(session: number, tick: () => void, intervalMs: number): void {
+        if (session !== this.session || this.destroyed || this.retryTimer) {
+            return;
         }
 
-        if (isDisconnected) {
-            updateInstanceState(ConnectionState.Disconnected);
-        } else if (isError) {
-            updateInstanceState(ConnectionState.Error);
+        this.clearStatusInterval();
+        this.statusInterval = setInterval(tick, intervalMs);
+    }
+
+    private destroyRpcClient(): void {
+        if (!appState.rpc) {
+            return;
         }
-        // Use the stored error message for the initial update too
-        updateProgressBar(currentErrorPayload);
+
+        appState.rpc.destroy();
+        updateRPC(null);
     }
 
     private clearStatusInterval(): void {
         if (this.statusInterval) {
             clearInterval(this.statusInterval);
             this.statusInterval = null;
+        }
+    }
+
+    private clearRetryTimer(): void {
+        if (this.retryTimer) {
+            clearInterval(this.retryTimer);
+            this.retryTimer = null;
         }
     }
 

@@ -13,7 +13,12 @@ import { type Configuration, ConnectionState } from './types/index.d';
 import { initializeProgressBar } from './utils/progressBar.js';
 
 const AUTH_FILE = path.join('auth.json');
+const discordRPC = new DiscordRPC();
 let refreshTimeoutId: NodeJS.Timeout | null = null;
+
+function createTraktInstance(): TraktInstance {
+    return new TraktInstance(discordRPC);
+}
 
 function checkEnvironmentVariables() {
     const requiredEnvVars = ['TRAKT_CLIENT_ID', 'TRAKT_CLIENT_SECRET'];
@@ -100,7 +105,7 @@ async function refreshAndSaveToken(): Promise<void> {
     try {
         if (!appState.traktInstance) {
             // Create a new instance if it doesn't exist
-            const traktInstance = new TraktInstance();
+            const traktInstance = createTraktInstance();
             await traktInstance.createTrakt();
             updateTraktInstance(traktInstance);
         }
@@ -150,7 +155,7 @@ async function setupTokenRefresh(): Promise<void> {
 
 async function authoriseTrakt(config: Configuration): Promise<void> {
     if (!appState.traktInstance) {
-        const traktInstance = new TraktInstance();
+        const traktInstance = createTraktInstance();
         await traktInstance.createTrakt();
         updateTraktInstance(traktInstance);
     }
@@ -204,7 +209,7 @@ async function ensureAuthentication(): Promise<void> {
                 updateTraktCredentials(configWithToken);
 
                 // Initialize the TraktInstance
-                const traktInstance = new TraktInstance();
+                const traktInstance = createTraktInstance();
                 await traktInstance.createTrakt();
                 updateTraktInstance(traktInstance);
 
@@ -239,24 +244,21 @@ async function startApplication(): Promise<void> {
     initializeProgressBar();
 
     if (!appState.traktInstance) {
-        const traktInstance = new TraktInstance();
+        const traktInstance = createTraktInstance();
         await traktInstance.createTrakt();
         updateTraktInstance(traktInstance);
     }
 
-    const discordRPC = new DiscordRPC();
     await discordRPC.spawnRPC(appState.traktInstance!);
 }
 
 function cleanup() {
+    discordRPC.destroy();
     if (appState.retryInterval) {
         clearInterval(appState.retryInterval);
     }
     if (refreshTimeoutId) {
         clearTimeout(refreshTimeoutId);
-    }
-    if (appState.rpc) {
-        appState.rpc.destroy();
     }
 }
 
