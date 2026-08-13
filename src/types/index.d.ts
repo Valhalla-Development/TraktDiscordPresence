@@ -3,7 +3,7 @@ export interface Configuration {
     clientSecret: string;
     discordClientId: string;
     movieDiscordClientId: string;
-    oAuth?: string;
+    oAuth?: TraktToken;
     seriesDiscordClientId: string;
 }
 

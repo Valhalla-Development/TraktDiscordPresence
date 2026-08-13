@@ -1,5 +1,3 @@
-import { existsSync, readFileSync, writeFileSync } from 'node:fs';
-import path from 'node:path';
 import chalk from 'chalk';
 import { DiscordRPC } from './services/discordRPC.ts';
 import { TraktInstance } from './services/traktInstance.ts';
@@ -11,8 +9,14 @@ import {
 } from './state/appState.js';
 import { type Configuration, ConnectionState } from './types/index.d';
 import { initializeProgressBar } from './utils/progressBar.js';
+import {
+    MAX_SETTIMEOUT_MS,
+    persistToken,
+    readAuth,
+    remainingMs,
+    shouldRefreshToken,
+} from './utils/traktToken.ts';
 
-const AUTH_FILE = path.join('auth.json');
 const discordRPC = new DiscordRPC();
 let refreshTimeoutId: NodeJS.Timeout | null = null;
 
@@ -57,37 +61,30 @@ function resolveDiscordClientIds(): {
 }
 
 async function scheduleNextRefresh(): Promise<void> {
-    if (!(appState.traktInstance && appState.traktCredentials?.oAuth)) {
+    const token = appState.traktCredentials?.oAuth;
+    if (!(appState.traktInstance && token)) {
         return;
     }
 
     // Clear any existing timeout
     if (refreshTimeoutId) {
         clearTimeout(refreshTimeoutId);
+        refreshTimeoutId = null;
     }
 
-    const token = JSON.parse(appState.traktCredentials.oAuth);
-    const timeUntilRefresh = appState.traktInstance.calculateTimeUntilRefresh(token);
+    let delay = remainingMs(token);
+    if (delay <= 0) {
+        await refreshAndSaveToken();
+        const nextToken = appState.traktCredentials?.oAuth;
+        if (nextToken && remainingMs(nextToken) > 0) {
+            await scheduleNextRefresh();
+        }
+        return;
+    }
 
     // Check if value is too large for a 32-bit signed integer
-    if (timeUntilRefresh > 2 ** 31 - 1) {
-        // Create a configuration object from environment variables
-        const { movieDiscordClientId, seriesDiscordClientId } = resolveDiscordClientIds();
-        const config: Configuration = {
-            clientId: process.env.TRAKT_CLIENT_ID!,
-            clientSecret: process.env.TRAKT_CLIENT_SECRET!,
-            discordClientId: movieDiscordClientId,
-            movieDiscordClientId,
-            seriesDiscordClientId,
-        };
-
-        console.log(chalk.yellow('🔄 Expired token detected, starting authentication...'));
-
-        // Skip to fresh authentication
-        updateTraktCredentials(config);
-        await authoriseTrakt(config);
-        await setupTokenRefresh();
-        return;
+    if (delay > MAX_SETTIMEOUT_MS) {
+        delay = MAX_SETTIMEOUT_MS;
     }
 
     // Schedule the next refresh
@@ -98,7 +95,7 @@ async function scheduleNextRefresh(): Promise<void> {
         } catch (error) {
             console.error(chalk.red('Failed to refresh token:'), error);
         }
-    }, timeUntilRefresh);
+    }, delay);
 }
 
 async function refreshAndSaveToken(): Promise<void> {
@@ -111,7 +108,7 @@ async function refreshAndSaveToken(): Promise<void> {
         }
 
         // Only refresh if needed
-        if (appState.traktInstance!.shouldRefreshToken()) {
+        if (shouldRefreshToken(appState.traktCredentials?.oAuth)) {
             const newToken = await appState.traktInstance!.refreshToken();
 
             // Validate the new token
@@ -119,16 +116,7 @@ async function refreshAndSaveToken(): Promise<void> {
                 throw new Error('Invalid token received from refresh');
             }
 
-            writeFileSync(AUTH_FILE, JSON.stringify(newToken, null, 2));
-
-            // Update the app state with the new token
-            if (appState.traktCredentials) {
-                const updatedConfig = {
-                    ...appState.traktCredentials,
-                    oAuth: JSON.stringify(newToken),
-                };
-                updateTraktCredentials(updatedConfig);
-            }
+            persistToken(newToken);
         }
     } catch (refreshError) {
         // If refresh fails, attempt to re-authenticate
@@ -166,14 +154,8 @@ async function authoriseTrakt(config: Configuration): Promise<void> {
         console.log(chalk.blue('\nStarting device authentication flow...'));
         const token = await appState.traktInstance!.getDeviceAuthentication();
 
-        const updatedConfig = {
-            ...config,
-            oAuth: JSON.stringify(token),
-        };
-        updateTraktCredentials(updatedConfig);
+        persistToken(token, config);
 
-        // Save the token
-        writeFileSync(AUTH_FILE, JSON.stringify(token, null, 2));
         console.log(chalk.green('\nAuthentication token saved successfully'));
 
         // Clear the console after successful authentication
@@ -199,16 +181,13 @@ async function ensureAuthentication(): Promise<void> {
         };
 
         // Check for stored token first
-        if (existsSync(AUTH_FILE)) {
+        const storedToken = readAuth();
+        if (storedToken) {
             try {
-                // Fetch existing token
-                const storedToken = JSON.parse(readFileSync(AUTH_FILE, 'utf8'));
-
-                const configWithToken = {
+                updateTraktCredentials({
                     ...config,
-                    oAuth: JSON.stringify(storedToken),
-                };
-                updateTraktCredentials(configWithToken);
+                    oAuth: storedToken,
+                });
 
                 // Initialize the TraktInstance
                 const traktInstance = createTraktInstance();

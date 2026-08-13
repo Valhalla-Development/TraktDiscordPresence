@@ -16,12 +16,12 @@ import {
 } from '../types/index.d';
 import { getMovieImage, getShowImages } from '../utils/getContentDetails.ts';
 import { updateProgressBar } from '../utils/progressBar.ts';
+import { persistToken, shouldRefreshToken } from '../utils/traktToken.ts';
 import type { DiscordRPC } from './discordRPC.ts';
 
 export class TraktInstance {
     private trakt: Trakt;
     private readonly discordRPC: DiscordRPC;
-    private readonly REFRESH_BUFFER = 60 * 60 * 1000; // 1 hour buffer before expiration
 
     // Track current content and its images
     private currentContentId: string | null = null;
@@ -32,37 +32,6 @@ export class TraktInstance {
 
     constructor(discordRPC: DiscordRPC) {
         this.discordRPC = discordRPC;
-    }
-
-    calculateTimeUntilRefresh(token: TraktToken): number {
-        if (!(token.expires_in && token.created_at)) {
-            return 0;
-        }
-
-        const expiresIn = token.expires_in * 1000; // Convert to milliseconds
-        const createdAt = token.created_at * 1000; // Convert to milliseconds
-        const expiresAt = createdAt + expiresIn;
-        const now = Date.now();
-
-        // Calculate time until we should refresh (1 hour before expiration)
-        const timeUntilExpiry = expiresAt - now - this.REFRESH_BUFFER;
-
-        // If token is expired or will expire soon, refresh immediately
-        if (timeUntilExpiry <= 0) {
-            return 0;
-        }
-
-        return timeUntilExpiry;
-    }
-
-    shouldRefreshToken(): boolean {
-        if (!appState.traktCredentials?.oAuth) {
-            return true;
-        }
-
-        const token = JSON.parse(appState.traktCredentials.oAuth);
-        const timeUntilRefresh = this.calculateTimeUntilRefresh(token);
-        return timeUntilRefresh <= 0;
     }
 
     async createTrakt(): Promise<void> {
@@ -76,16 +45,16 @@ export class TraktInstance {
         });
 
         if (appState.traktCredentials.oAuth) {
-            const token = JSON.parse(appState.traktCredentials.oAuth);
-            const isValid = this.validateToken(token);
+            const token = appState.traktCredentials.oAuth;
 
-            if (!isValid) {
+            if (shouldRefreshToken(token)) {
                 console.warn(
                     chalk.yellow('Stored token is invalid or expired, attempting to refresh...')
                 );
                 try {
                     await this.trakt.import_token(token);
-                    await this.refreshToken();
+                    const newToken = await this.refreshToken();
+                    persistToken(newToken);
                     return;
                 } catch (refreshError) {
                     console.error(chalk.red('Token refresh failed:'), refreshError);
@@ -383,25 +352,6 @@ export class TraktInstance {
         }
 
         return testShow;
-    }
-
-    private validateToken(token: TraktToken): boolean {
-        try {
-            if (!(token.access_token && token.refresh_token)) {
-                return false;
-            }
-
-            // Check if token is expired or will expire soon (within 5 minutes)
-            const expiresIn = token.expires_in || 0;
-            const createdAt = token.created_at || 0;
-            const now = Math.floor(Date.now() / 1000);
-            const timeElapsed = now - createdAt;
-
-            return timeElapsed < expiresIn - 300;
-        } catch (error) {
-            console.error(chalk.red('Token validation failed:'), error);
-            return false;
-        }
     }
 
     private async ensureDiscordClientForContent(contentType: 'movie' | 'show'): Promise<boolean> {
