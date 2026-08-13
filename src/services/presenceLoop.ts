@@ -1,7 +1,7 @@
 import chalk from 'chalk';
 import { imagesForWatching, isMovie, mapWatching, watchingContentId } from '../presence.ts';
 import { getTestWatching, parseTestType } from '../testWatching.ts';
-import { ConnectionState, type Movie, type TvShow } from '../types/index.d';
+import { ConnectionState, type Movie, type TvShow } from '../types.ts';
 import { setInstanceState, updateProgressBar } from '../utils/progressBar.ts';
 import { type DiscordRPC, POLL_IDLE_MS, POLL_PLAYING_MS, POLL_TEST_MS } from './discordRPC.ts';
 import type { TraktInstance } from './traktInstance.ts';

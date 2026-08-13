@@ -1,6 +1,6 @@
 import { Client } from '@xhayper/discord-rpc';
 import chalk from 'chalk';
-import { ConnectionState, type TraktContent } from '../types/index.d';
+import { ConnectionState, type TraktContent } from '../types.ts';
 import {
     getLastErrorMessage,
     setCountdownTimer,

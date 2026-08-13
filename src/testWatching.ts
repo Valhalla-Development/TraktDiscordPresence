@@ -1,4 +1,4 @@
-import type { Movie, TvShow } from './types/index.d';
+import type { Movie, TvShow } from './types.ts';
 
 export function parseTestType(): 'movie' | 'show' {
     // Check which script was run

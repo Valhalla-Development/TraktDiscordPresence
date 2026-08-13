@@ -2,7 +2,7 @@ import chalk from 'chalk';
 import { AuthSession } from './auth.ts';
 import { DiscordRPC } from './services/discordRPC.ts';
 import { PresenceLoop } from './services/presenceLoop.ts';
-import { ConnectionState } from './types/index.d';
+import { ConnectionState } from './types.ts';
 import { initializeProgressBar, setInstanceState } from './utils/progressBar.ts';
 
 async function startPresence(auth: AuthSession, discordRPC: DiscordRPC): Promise<void> {

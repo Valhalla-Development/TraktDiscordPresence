@@ -1,7 +1,7 @@
 import chalk from 'chalk';
 import { type Options, type Params, SingleBar } from 'cli-progress';
 import { DateTime } from 'luxon';
-import { ConnectionState, type ProgressBarPayload } from '../types/index.d';
+import { ConnectionState, type ProgressBarPayload } from '../types.ts';
 
 let progressBar: SingleBar | null = null;
 let instanceState: ConnectionState = ConnectionState.Disconnected;

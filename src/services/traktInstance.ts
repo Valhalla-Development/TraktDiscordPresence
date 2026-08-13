@@ -1,11 +1,10 @@
 import chalk from 'chalk';
-// @ts-expect-error [currently, no types file exists for trakt.tv, so this will cause an error]
 import Trakt from 'trakt.tv';
-import type { Configuration, Movie, TraktToken, TvShow } from '../types/index.d';
+import type { Configuration, Movie, TraktToken, TvShow } from '../types.ts';
 import { persistToken, shouldRefreshToken } from '../utils/traktToken.ts';
 
 export class TraktInstance {
-    private trakt: Trakt;
+    private trakt!: Trakt;
     private config: Configuration;
     private readonly onConfig?: (config: Configuration) => void;
 
@@ -50,10 +49,8 @@ export class TraktInstance {
                 }
             }
 
-            return this.trakt.import_token(token);
+            await this.trakt.import_token(token);
         }
-
-        return Promise.resolve();
     }
 
     async refreshToken(): Promise<TraktToken> {

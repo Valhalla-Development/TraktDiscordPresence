@@ -1,4 +1,4 @@
-import type { Movie, ProgressBarPayload, TraktContent, TvShow } from './types/index.d';
+import type { Movie, ProgressBarPayload, TraktContent, TvShow } from './types.ts';
 import { getMovieImage, getShowImages } from './utils/getContentDetails.ts';
 
 export type PresenceActivity = TraktContent & {

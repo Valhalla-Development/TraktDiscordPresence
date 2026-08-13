@@ -1,6 +1,6 @@
 import chalk from 'chalk';
 import { TraktInstance } from './services/traktInstance.ts';
-import type { Configuration } from './types/index.d';
+import type { Configuration } from './types.ts';
 import {
     MAX_SETTIMEOUT_MS,
     persistToken,

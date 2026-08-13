@@ -1,6 +1,6 @@
 import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
-import type { Configuration, TraktToken } from '../types/index.d';
+import type { Configuration, TraktToken } from '../types.ts';
 
 const AUTH_FILE = path.resolve(import.meta.dirname, '../../auth.json');
 
