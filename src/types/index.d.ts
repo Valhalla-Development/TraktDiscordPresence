@@ -1,11 +1,16 @@
-export interface Configuration {
+export interface TraktConfig {
     clientId: string;
     clientSecret: string;
+    oAuth?: TraktToken;
+}
+
+export interface DiscordConfig {
     discordClientId: string;
     movieDiscordClientId: string;
-    oAuth?: TraktToken;
     seriesDiscordClientId: string;
 }
+
+export type Configuration = TraktConfig & DiscordConfig;
 
 export interface TraktContent {
     details?: string;

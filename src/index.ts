@@ -24,40 +24,32 @@ function createTraktInstance(): TraktInstance {
     return new TraktInstance(discordRPC);
 }
 
-function checkEnvironmentVariables() {
+function loadConfig(): Configuration {
     const requiredEnvVars = ['TRAKT_CLIENT_ID', 'TRAKT_CLIENT_SECRET'];
     const missing = requiredEnvVars.filter((key) => !process.env[key]);
 
-    const hasMovieDiscordId = Boolean(process.env.MOVIE_DISCORD_CLIENT_ID);
-    const hasSeriesDiscordId = Boolean(process.env.SERIES_DISCORD_CLIENT_ID);
+    const fallback = process.env.DISCORD_CLIENT_ID;
+    const movieDiscordClientId = process.env.MOVIE_DISCORD_CLIENT_ID || fallback;
+    const seriesDiscordClientId = process.env.SERIES_DISCORD_CLIENT_ID || fallback;
 
-    if (!hasMovieDiscordId) {
-        missing.push('MOVIE_DISCORD_CLIENT_ID');
-    }
-
-    if (!hasSeriesDiscordId) {
-        missing.push('SERIES_DISCORD_CLIENT_ID');
+    if (!(movieDiscordClientId && seriesDiscordClientId)) {
+        missing.push(
+            'DISCORD_CLIENT_ID (or both MOVIE_DISCORD_CLIENT_ID and SERIES_DISCORD_CLIENT_ID)'
+        );
     }
 
     if (missing.length > 0) {
         console.error(chalk.red(`\nMissing required environment variables: ${missing.join(', ')}`));
         process.exit(1);
     }
-}
 
-function resolveDiscordClientIds(): {
-    movieDiscordClientId: string;
-    seriesDiscordClientId: string;
-} {
-    const fallback = process.env.DISCORD_CLIENT_ID;
-    const movieDiscordClientId = process.env.MOVIE_DISCORD_CLIENT_ID || fallback;
-    const seriesDiscordClientId = process.env.SERIES_DISCORD_CLIENT_ID || fallback;
-
-    if (!(movieDiscordClientId && seriesDiscordClientId)) {
-        throw new Error('Discord client IDs are not configured correctly');
-    }
-
-    return { movieDiscordClientId, seriesDiscordClientId };
+    return {
+        clientId: process.env.TRAKT_CLIENT_ID!,
+        clientSecret: process.env.TRAKT_CLIENT_SECRET!,
+        discordClientId: movieDiscordClientId!,
+        movieDiscordClientId: movieDiscordClientId!,
+        seriesDiscordClientId: seriesDiscordClientId!,
+    };
 }
 
 async function scheduleNextRefresh(): Promise<void> {
@@ -168,17 +160,7 @@ async function authoriseTrakt(config: Configuration): Promise<void> {
 
 async function ensureAuthentication(): Promise<void> {
     try {
-        await checkEnvironmentVariables();
-
-        // Create a configuration object from environment variables
-        const { movieDiscordClientId, seriesDiscordClientId } = resolveDiscordClientIds();
-        const config: Configuration = {
-            clientId: process.env.TRAKT_CLIENT_ID!,
-            clientSecret: process.env.TRAKT_CLIENT_SECRET!,
-            discordClientId: movieDiscordClientId,
-            movieDiscordClientId,
-            seriesDiscordClientId,
-        };
+        const config = loadConfig();
 
         // Check for stored token first
         const storedToken = readAuth();

@@ -86,8 +86,19 @@ TraktDiscordPresence is the missing link between your Trakt.tv account and Disco
     - Name it `Discord`
     - Set `Redirect uri` as `urn:ietf:wg:oauth:2.0:oob`
 
-2. [Create a new Discord application](https://discord.com/developers/applications)
-    - Name it `Trakt`
+2. [Create Discord application(s)](https://discord.com/developers/applications)
+
+   Discord Rich Presence uses the **application name** as the activity text (for example, "Watching Inception"). Two apps let movies and TV shows show different names.
+
+   **Recommended — two apps**
+    - Movies app (name it something like `Movies`) → `MOVIE_DISCORD_CLIENT_ID`
+    - Series app (name it something like `TV Shows`) → `SERIES_DISCORD_CLIENT_ID`
+    - Add `trakt.png` from the `images` folder as the app icon and cover image in the `Rich Presence` section of each app
+    - Upload the remaining images from the `images` folder
+
+   **Simple — one app**
+    - Name it `Trakt` → `DISCORD_CLIENT_ID`
+    - Movies and series will share that activity name
     - Add `trakt.png` from the `images` folder as the app icon and cover image in `Rich Presence` section
     - Upload the remaining images from the `images` folder
 
