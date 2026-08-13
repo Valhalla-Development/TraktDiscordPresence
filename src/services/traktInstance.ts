@@ -96,59 +96,7 @@ export class TraktInstance {
         }
     }
 
-    async getWatching(
-        testMode = false,
-        testType?: 'movie' | 'show'
-    ): Promise<Movie | TvShow | null> {
-        if (testMode) {
-            // Generate test data
-            const watching = this.generateTestWatchingData(testType!);
-            const typeMsg = testType ? `${testType}` : 'random content';
-            console.log(chalk.blue(`🧪 Test mode: Simulating watching ${typeMsg}...`));
-            return watching;
-        }
-
-        // Normal mode: get real data from Trakt
+    async getWatching(): Promise<Movie | TvShow | null> {
         return await this.trakt.users.watching({ username: 'me' });
-    }
-
-    private generateTestWatchingData(type: 'movie' | 'show'): Movie | TvShow {
-        const testMovie: Movie = {
-            expires_at: new Date(Date.now() + 2 * 60 * 60 * 1000).toISOString(), // 2 hours from now
-            movie: {
-                ids: {
-                    tmdb: '157336',
-                },
-                title: 'Interstellar',
-                year: 2014,
-            },
-            started_at: new Date(Date.now() - 30 * 60 * 1000).toISOString(), // 30 minutes ago
-        };
-
-        const testShow: TvShow = {
-            episode: {
-                ids: {
-                    tmdb: '1396',
-                },
-                number: 16,
-                season: 5,
-                title: 'Felina',
-            },
-            expires_at: new Date(Date.now() + 45 * 60 * 1000).toISOString(), // 45 minutes from now
-            show: {
-                ids: {
-                    tmdb: '1396',
-                },
-                title: 'Breaking Bad',
-                year: 2008,
-            },
-            started_at: new Date(Date.now() - 15 * 60 * 1000).toISOString(), // 15 minutes ago
-        };
-
-        if (type === 'movie') {
-            return testMovie;
-        }
-
-        return testShow;
     }
 }
