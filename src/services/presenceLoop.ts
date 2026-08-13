@@ -3,7 +3,7 @@ import { imagesForWatching, isMovie, mapWatching, watchingContentId } from '../p
 import { getTestWatching, parseTestType } from '../testWatching.ts';
 import { ConnectionState, type Movie, type TvShow } from '../types/index.d';
 import { setInstanceState, updateProgressBar } from '../utils/progressBar.ts';
-import type { DiscordRPC } from './discordRPC.ts';
+import { type DiscordRPC, POLL_IDLE_MS, POLL_PLAYING_MS, POLL_TEST_MS } from './discordRPC.ts';
 import type { TraktInstance } from './traktInstance.ts';
 
 export class PresenceLoop {
@@ -60,10 +60,16 @@ export class PresenceLoop {
                 // Clear the Discord activity when nothing is playing
                 await this.discordRPC.clearActivity();
             }
+
+            this.discordRPC.setPollInterval(
+                isTestMode ? POLL_TEST_MS : watching ? POLL_PLAYING_MS : POLL_IDLE_MS
+            );
         } catch (error) {
             const errorMsg = `Failed to update status: ${error}.`;
             setInstanceState(ConnectionState.Error, { error: errorMsg });
-            if (!this.discordRPC.isConnected()) {
+            if (this.discordRPC.isConnected()) {
+                this.discordRPC.notePollError();
+            } else {
                 this.discordRPC.scheduleReconnect();
             }
         }
@@ -110,6 +116,6 @@ export class PresenceLoop {
         });
 
         await this.discordRPC.reconnect();
-        return false;
+        return this.discordRPC.isConnected();
     }
 }
