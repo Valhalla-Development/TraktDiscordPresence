@@ -21,14 +21,18 @@ export interface TraktContent {
     state?: string;
 }
 
+export interface TraktIds {
+    slug?: string;
+    tmdb?: number;
+    trakt?: number;
+}
+
 export interface Movie {
     expires_at: string;
     movie: {
         title: string;
         year: number;
-        ids: {
-            tmdb: string;
-        };
+        ids: TraktIds;
     };
     started_at: string;
 }
@@ -38,16 +42,12 @@ export interface TvShow {
         season: number;
         number: number;
         title: string;
-        ids: {
-            tmdb: string;
-        };
+        ids: TraktIds;
     };
     expires_at: string;
     show: {
         title: string;
-        ids: {
-            tmdb: string;
-        };
+        ids: TraktIds;
         year: number;
     };
     started_at: string;
