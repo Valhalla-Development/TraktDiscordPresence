@@ -7,6 +7,8 @@ let progressBar: SingleBar | null = null;
 let instanceState: ConnectionState = ConnectionState.Disconnected;
 let countdownTimer = 15;
 let lastErrorMessage: string | null = null;
+let barStarted = false;
+let barTotal = 0;
 
 export function setInstanceState(state: ConnectionState, payload?: ProgressBarPayload): void {
     instanceState = state;
@@ -85,6 +87,8 @@ export function generateProgressBar(): SingleBar {
 export function updateProgressBar(payload?: ProgressBarPayload): void {
     if (!progressBar) {
         progressBar = generateProgressBar();
+        barStarted = false;
+        barTotal = 0;
     }
 
     if (
@@ -103,12 +107,30 @@ export function updateProgressBar(payload?: ProgressBarPayload): void {
             'seconds'
         ).seconds;
 
-        progressBar.start(totalDuration, elapsedDuration, payload);
-        progressBar.update(elapsedDuration);
+        applyBarUpdate(totalDuration, elapsedDuration, payload);
     } else {
-        progressBar.start(100, 0, payload);
-        progressBar.update(0);
+        applyBarUpdate(100, 0, payload);
     }
+}
+
+function applyBarUpdate(total: number, current: number, payload?: ProgressBarPayload): void {
+    if (!progressBar) {
+        return;
+    }
+
+    if (!barStarted) {
+        progressBar.start(total, current, payload);
+        barStarted = true;
+        barTotal = total;
+        return;
+    }
+
+    if (barTotal !== total) {
+        progressBar.setTotal(total);
+        barTotal = total;
+    }
+
+    progressBar.update(current, payload);
 }
 
 function formatPlayingState(options: Options, params: Params, payload: ProgressBarPayload): string {
