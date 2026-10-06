@@ -48,4 +48,7 @@ async function main(): Promise<void> {
 }
 
 // Start the application
-main().catch(console.error);
+main().catch((error: unknown) => {
+    console.error(error instanceof Error ? error.message : 'Application startup failed');
+    process.exitCode = 1;
+});

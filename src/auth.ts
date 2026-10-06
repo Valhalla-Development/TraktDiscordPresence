@@ -1,6 +1,7 @@
 import chalk from 'chalk';
 import { TraktInstance } from './services/traktInstance.ts';
 import type { Configuration } from './types.ts';
+import { isAuthenticationError } from './utils/request.ts';
 import {
     MAX_SETTIMEOUT_MS,
     persistToken,
@@ -13,6 +14,7 @@ export class AuthSession {
     readonly trakt: TraktInstance;
     private config: Configuration;
     private refreshTimeoutId: NodeJS.Timeout | null = null;
+    private lifecycle: 'active' | 'stopped' = 'active';
     private onFatal: (() => void) | null = null;
 
     private constructor(config: Configuration) {
@@ -68,6 +70,7 @@ export class AuthSession {
     }
 
     stopRefresh(): void {
+        this.lifecycle = 'stopped';
         if (this.refreshTimeoutId) {
             clearTimeout(this.refreshTimeoutId);
             this.refreshTimeoutId = null;
@@ -90,7 +93,10 @@ export class AuthSession {
                     await this.trakt.createTrakt();
 
                     return;
-                } catch {
+                } catch (error) {
+                    if (!isAuthenticationError(error)) {
+                        throw error;
+                    }
                     console.warn(
                         chalk.yellow('Failed to load stored token, will authenticate again')
                     );
@@ -102,15 +108,18 @@ export class AuthSession {
         } catch (error) {
             console.error(
                 chalk.red(
-                    'Failed to read environment variables. Please ensure the environment variables are set correctly.'
+                    'Failed to initialize authentication. Please check your connection and credentials.'
                 ),
-                error
+                error instanceof Error ? error.message : 'Unknown authentication error'
             );
-            process.exit(1);
+            throw error;
         }
     }
 
     private async authoriseTrakt(): Promise<void> {
+        // A rejected token must not be imported again before device authorization.
+        const { oAuth: _rejectedToken, ...config } = this.config;
+        this.trakt.setConfig(config);
         await this.trakt.createTrakt();
 
         try {
@@ -135,6 +144,9 @@ export class AuthSession {
     }
 
     private async scheduleNextRefresh(): Promise<void> {
+        if (this.lifecycle === 'stopped') {
+            return;
+        }
         const token = this.config.oAuth;
         if (!token) {
             return;
@@ -148,7 +160,12 @@ export class AuthSession {
 
         let delay = remainingMs(token);
         if (delay <= 0) {
-            await this.refreshAndSaveToken();
+            try {
+                await this.refreshAndSaveToken();
+            } catch {
+                this.scheduleRefreshRetry();
+                return;
+            }
             const nextToken = this.config.oAuth;
             if (nextToken && remainingMs(nextToken) > 0) {
                 await this.scheduleNextRefresh();
@@ -166,10 +183,20 @@ export class AuthSession {
             try {
                 await this.refreshAndSaveToken();
                 await this.scheduleNextRefresh();
-            } catch (error) {
-                console.error(chalk.red('Failed to refresh token:'), error);
+            } catch {
+                this.scheduleRefreshRetry();
             }
         }, delay);
+    }
+
+    private scheduleRefreshRetry(): void {
+        if (this.lifecycle === 'stopped') {
+            return;
+        }
+        console.warn(chalk.yellow('Token refresh unavailable, retrying in 60 seconds.'));
+        this.refreshTimeoutId = setTimeout(() => {
+            this.scheduleNextRefresh().catch(() => this.scheduleRefreshRetry());
+        }, 60_000);
     }
 
     private async refreshAndSaveToken(): Promise<void> {
@@ -185,8 +212,11 @@ export class AuthSession {
 
                 this.trakt.setConfig(persistToken(newToken, this.config));
             }
-        } catch {
-            // If refresh fails, attempt to re-authenticate
+        } catch (error) {
+            if (!isAuthenticationError(error)) {
+                throw error;
+            }
+            // Re-authenticate only when Trakt rejects the credentials.
             try {
                 await this.authoriseTrakt();
             } catch (authError) {
