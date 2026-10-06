@@ -1,0 +1,2 @@
+# Keep checked-out text consistent with the formatter on every platform.
+* text=auto eol=lf
