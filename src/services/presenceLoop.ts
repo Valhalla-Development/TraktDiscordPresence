@@ -11,6 +11,7 @@ export class PresenceLoop {
     private readonly discordRPC: DiscordRPC;
 
     // Track current content and its images
+    private nextImageRetryAt = 0;
     private currentContentId: string | null = null;
     private currentImages: { small: string; large: string } = {
         large: 'trakt',
@@ -57,6 +58,7 @@ export class PresenceLoop {
             } else {
                 setInstanceState(ConnectionState.NotPlaying);
 
+                this.currentContentId = null;
                 // Clear the Discord activity when nothing is playing
                 await this.discordRPC.clearActivity();
             }
@@ -79,12 +81,19 @@ export class PresenceLoop {
         // Create unique ID for current content
         const contentId = watchingContentId(watching);
 
-        // Only fetch images if content changed
+        // Never carry artwork from a previous title into a failed lookup.
         if (contentId !== this.currentContentId) {
             this.currentContentId = contentId;
+            this.currentImages = { large: 'trakt', small: 'play' };
+            this.nextImageRetryAt = 0;
+        }
+        // Retry temporary failures at most once per minute for unchanged content.
+        if (Date.now() >= this.nextImageRetryAt) {
+            this.nextImageRetryAt = Date.now() + 60_000;
             const nextImages = await imagesForWatching(watching);
             if (nextImages) {
                 this.currentImages = nextImages;
+                this.nextImageRetryAt = Number.POSITIVE_INFINITY;
             }
         }
 

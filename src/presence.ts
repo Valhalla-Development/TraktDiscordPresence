@@ -22,9 +22,17 @@ export function isMovie(content: Movie | TvShow): content is Movie {
 }
 
 export function watchingContentId(watching: Movie | TvShow): string {
-    return isMovie(watching)
-        ? `movie_${watching.movie.ids.tmdb}`
-        : `episode_${watching.episode.ids.tmdb}`;
+    if (isMovie(watching)) {
+        const { ids, title, year } = watching.movie;
+        return `movie_${ids.trakt ?? ids.tmdb ?? ids.slug ?? `${title}_${year}`}`;
+    }
+    const { ids, season, number } = watching.episode;
+    const showId =
+        watching.show.ids.trakt ??
+        watching.show.ids.tmdb ??
+        watching.show.ids.slug ??
+        `${watching.show.title}_${watching.show.year}`;
+    return `episode_${ids.trakt ?? ids.tmdb ?? `${showId}_${season}_${number}`}`;
 }
 
 export function traktUrl(watching: Movie | TvShow): string {
@@ -39,7 +47,7 @@ export function traktUrl(watching: Movie | TvShow): string {
     }
 
     const { season, number } = watching.episode;
-    if (season && number) {
+    if (Number.isInteger(season) && season >= 0 && Number.isInteger(number) && number > 0) {
         return `https://trakt.tv/shows/${id}/seasons/${season}/episodes/${number}`;
     }
 
@@ -67,18 +75,27 @@ export async function imagesForWatching(
             const seasonId = watching.episode.season;
             const episodeId = watching.episode.number;
 
-            if (seasonId && episodeId && seriesId) {
+            if (
+                Number.isInteger(seasonId) &&
+                seasonId >= 0 &&
+                Number.isInteger(episodeId) &&
+                episodeId > 0 &&
+                seriesId
+            ) {
                 const result = await getShowImages(seriesId, seasonId, episodeId);
 
+                if (!result) {
+                    return DEFAULT_IMAGES;
+                }
                 return {
-                    large: result?.seasonImage || 'trakt',
-                    small: result?.episodeImage || 'play',
+                    large: result.seasonImage || 'trakt',
+                    small: result.episodeImage || 'play',
                 };
             }
         }
     } catch (error) {
         console.error('❌ Failed to fetch images:', error);
-        // Keep previous images or use defaults
+        // Signal a temporary failure so the presence loop can retry with backoff.
         return null;
     }
 

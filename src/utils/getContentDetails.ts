@@ -54,31 +54,30 @@ export async function getShowImages(
             tvShowID: tmdbId,
         });
 
-        if (seasonData.poster_path) {
-            const seasonImageUrl = `https://image.tmdb.org/t/p/w500${seasonData.poster_path}`;
+        const seasonImageUrl = seasonData.poster_path
+            ? `https://image.tmdb.org/t/p/w500${seasonData.poster_path}`
+            : 'trakt';
 
-            // Cache the season data
-            contentCache.set(cacheKey, {
-                episodes: seasonData.episodes || [],
-                image: seasonImageUrl,
-                type: 'season',
-            });
+        // Cache the season data
+        contentCache.set(cacheKey, {
+            episodes: seasonData.episodes || [],
+            image: seasonImageUrl,
+            type: 'season',
+        });
 
-            // Find the specific episode
-            const episode = seasonData.episodes?.find((ep) => ep.episode_number === episodeNumber);
+        // Find the specific episode
+        const episode = seasonData.episodes?.find((ep) => ep.episode_number === episodeNumber);
 
-            return {
-                episodeImage: episode?.still_path
-                    ? `https://image.tmdb.org/t/p/w500${episode.still_path}`
-                    : null,
-                seasonImage: seasonImageUrl,
-            };
-        }
+        return {
+            episodeImage: episode?.still_path
+                ? `https://image.tmdb.org/t/p/w500${episode.still_path}`
+                : null,
+            seasonImage: seasonImageUrl,
+        };
     } catch (error) {
         console.error(`Error fetching season ${seasonNumber} for TMDB ID ${tmdbId}:`, error);
+        throw error;
     }
-
-    return null;
 }
 
 /**
@@ -113,6 +112,7 @@ export async function getMovieImage(tmdbId: number): Promise<string | null> {
         }
     } catch (error) {
         console.error(`Error fetching movie for TMDB ID ${tmdbId}:`, error);
+        throw error;
     }
 
     return null;
