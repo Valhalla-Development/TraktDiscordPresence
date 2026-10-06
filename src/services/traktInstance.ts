@@ -1,6 +1,7 @@
 import chalk from 'chalk';
 import Trakt from 'trakt.tv';
 import type { Configuration, Movie, TraktToken, TvShow } from '../types.ts';
+import { withRequestTimeout } from '../utils/request.ts';
 import { persistToken, shouldRefreshToken } from '../utils/traktToken.ts';
 
 export class TraktInstance {
@@ -94,6 +95,7 @@ export class TraktInstance {
     }
 
     async getWatching(): Promise<Movie | TvShow | null> {
-        return await this.trakt.users.watching({ username: 'me' });
+        // The SDK has no abort API; late read-only responses are ignored after timeout.
+        return await withRequestTimeout(this.trakt.users.watching({ username: 'me' }), 'Trakt');
     }
 }

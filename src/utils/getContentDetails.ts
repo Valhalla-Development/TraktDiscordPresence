@@ -1,5 +1,6 @@
 import { LRUCache } from 'lru-cache';
 import { TMDB } from 'tmdb-ts';
+import { fetchWithTimeout } from './request.ts';
 
 // Cache for content posters/thumbnails to avoid repeat calls
 const contentCache = new LRUCache<
@@ -16,7 +17,9 @@ const contentCache = new LRUCache<
     updateAgeOnGet: true, // Reset TTL when item is accessed (keeps popular content fresh)
 });
 
-const tmdb = process.env.TMDB_API_KEY ? new TMDB(process.env.TMDB_API_KEY) : null;
+const tmdb = process.env.TMDB_API_KEY
+    ? new TMDB(process.env.TMDB_API_KEY, { fetch: fetchWithTimeout })
+    : null;
 
 /**
  * Fetches season poster and episode image from TMDB
