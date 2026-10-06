@@ -20,19 +20,22 @@
     "type-check": "tsc --noEmit"
   },
   "dependencies": {
-    "@xhayper/discord-rpc": "^1.3.4",
-    "chalk": "^6.0.0",
+    "@xhayper/discord-rpc": "^1.5.1",
+    "chalk": "^6.0.1",
     "cli-progress": "^3.12.0",
-    "lru-cache": "^11.5.2",
+    "lru-cache": "^11.5.3",
     "luxon": "^3.7.2",
     "tmdb-ts": "^2.3.0",
     "trakt.tv": "^8.2.0"
   },
   "devDependencies": {
-    "@biomejs/biome": "^2.5.8",
+    "@biomejs/biome": "^2.5.15",
     "@types/cli-progress": "^3.11.6",
-    "@types/luxon": "^3.7.4",
+    "@types/luxon": "^3.7.6",
     "typescript": "^7.0.2",
-    "ultracite": "^7.10.3"
+    "ultracite": "^7.12.4"
+  },
+  "patchedDependencies": {
+    "braces@3.0.3": "patches/braces@3.0.3.patch"
   }
 }
