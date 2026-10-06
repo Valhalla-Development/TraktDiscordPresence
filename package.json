@@ -37,6 +37,7 @@
     "ultracite": "^7.12.4"
   },
   "patchedDependencies": {
-    "braces@3.0.3": "patches/braces@3.0.3.patch"
+    "braces@3.0.3": "patches/braces@3.0.3.patch",
+    "trakt.tv@8.2.0": "patches/trakt.tv@8.2.0.patch"
   }
 }

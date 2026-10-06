@@ -24,6 +24,7 @@
   },
   "patchedDependencies": {
     "braces@3.0.3": "patches/braces@3.0.3.patch",
+    "trakt.tv@8.2.0": "patches/trakt.tv@8.2.0.patch",
   },
   "packages": {
     "@babel/helper-string-parser": ["@babel/helper-string-parser@7.29.7", "", {}, "sha512-Pb5ijPrZ89GDH8223L4UP8i6QApWxs04RbPQJTeWDV0/keR2E36MeKnyr6LYmUUvqRRI+Iv87SuF1W6ErINzYw=="],

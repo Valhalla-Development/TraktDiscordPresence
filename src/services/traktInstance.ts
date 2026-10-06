@@ -95,7 +95,7 @@ export class TraktInstance {
     }
 
     async getWatching(): Promise<Movie | TvShow | null> {
-        // The SDK has no abort API; late read-only responses are ignored after timeout.
+        // The SDK patch aborts HTTP requests; this also bounds the polling deadline.
         return await withRequestTimeout(this.trakt.users.watching({ username: 'me' }), 'Trakt');
     }
 }

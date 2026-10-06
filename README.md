@@ -144,9 +144,9 @@ CI runs these checks on Linux, macOS, and Windows with Bun v1.4.0.
 The `test:movie` and `test:show` scripts are manual presence simulations that
 launch the application and require real authentication and a running Discord client.
 
-Polling requests have a 15-second deadline. TMDB requests are aborted at that
-deadline; the Trakt SDK does not expose cancellation, so late watching responses
-are ignored. Failed artwork lookups retry after one minute with default artwork.
+Trakt and TMDB HTTP requests are aborted after 15 seconds. The
+`patches/trakt.tv@8.2.0.patch` dependency patch gives the Trakt SDK request
+timeouts and disables internal retries so the application controls backoff. Failed artwork lookups retry after one minute with default artwork.
 
 Tokens are validated and saved through atomic replacement. On POSIX systems,
 `auth.json` is restricted to its owner, including files created by older versions.

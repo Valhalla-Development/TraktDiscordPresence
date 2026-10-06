@@ -1,0 +1,40 @@
+diff --git a/trakt.js b/trakt.js
+index 7590148344b3248b511618cd9b7c998c637869a2..033d7c604dbc8543c039a5bab462a19611b141ae 100644
+--- a/trakt.js
++++ b/trakt.js
+@@ -82,7 +82,7 @@ module.exports = class Trakt {
+         };
+ 
+         this._debug(req);
+-        return got(req).then(response => {
++        return got({ ...req, timeout: { request: 15000 }, retry: { limit: 0 } }).then(response => {
+             const body = JSON.parse(response.body);
+ 
+             this._authentication.refresh_token = body.refresh_token;
+@@ -111,7 +111,7 @@ module.exports = class Trakt {
+             })
+         };
+         this._debug(req);
+-        got(req);
++        got({ ...req, timeout: { request: 15000 }, retry: { limit: 0 } });
+     }
+ 
+     // Get code to paste on login screen
+@@ -127,7 +127,7 @@ module.exports = class Trakt {
+         };
+ 
+         this._debug(req);
+-        return got(req).then(response => JSON.parse(response.body)).catch(error => {
++        return got({ ...req, timeout: { request: 15000 }, retry: { limit: 0 } }).then(response => JSON.parse(response.body)).catch(error => {
+             throw (error.response && error.response.statusCode == 401) ? Error(error.response.headers['www-authenticate']) : error;
+         });
+     }
+@@ -222,7 +222,7 @@ module.exports = class Trakt {
+         }
+ 
+         this._debug(req);
+-        return got(req).then(response => this._parseResponse(method, params, response));
++        return got({ ...req, timeout: { request: 15000 }, retry: { limit: 0 } }).then(response => this._parseResponse(method, params, response));
+     }
+ 
+     // Parse trakt response: pagination & stuff
