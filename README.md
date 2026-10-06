@@ -130,6 +130,35 @@ Upon successful setup, your console output should resemble this:
 
 The application provides real-time updates on your watching status directly in the console.
 
+## Development checks
+
+Run the automated checks without contacting Trakt, TMDB, or Discord:
+
+```bash
+bun install --frozen-lockfile
+bun run lint
+bun run test
+```
+
+CI runs these checks on Linux, macOS, and Windows with Bun v1.4.0.
+The `test:movie` and `test:show` scripts are manual presence simulations that
+launch the application and require real authentication and a running Discord client.
+
+Polling requests have a 15-second deadline. TMDB requests are aborted at that
+deadline; the Trakt SDK does not expose cancellation, so late watching responses
+are ignored. Failed artwork lookups retry after one minute with default artwork.
+
+Tokens are validated and saved through atomic replacement. On POSIX systems,
+`auth.json` is restricted to its owner, including files created by older versions.
+On Windows, access follows the containing directory's ACLs; keep the project in a
+private user directory.
+
+The `patches/braces@3.0.3.patch` dependency patch bounds parser nesting and recursive
+AST traversal to mitigate GHSA-vfj7-8cjw-p6xm while no upstream fix is available.
+Unusually deep patterns are rejected. Keep the patch until an upstream release
+provides equivalent protection; regression tests cover ordinary patterns and
+deep inputs. Package advisory scanners may still flag the original version number.
+
 ## 🤝 Contributing
 
 We welcome contributions to TraktDiscordPresence. If you'd like to contribute, please follow these steps:

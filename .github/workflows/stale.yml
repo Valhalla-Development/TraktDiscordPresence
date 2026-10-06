@@ -5,8 +5,11 @@ name: Close Stale Issues and PRs
 jobs:
   stale:
     runs-on: ubuntu-latest
+    permissions:
+      issues: write
+      pull-requests: write
     steps:
-      - uses: actions/stale@v9.0.0
+      - uses: actions/stale@v11.0.0
         with:
           days-before-stale: 30
           days-before-close: 5

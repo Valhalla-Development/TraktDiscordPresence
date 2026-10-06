@@ -6,7 +6,7 @@
   "bugs": {
     "url": "https://github.com/Valhalla-Development/TraktDiscordPresence/issues"
   },
-  "repository": "https://github.com/RagnarLothbrok-Odin/TraktDiscordPresence.git",
+  "repository": "https://github.com/Valhalla-Development/TraktDiscordPresence.git",
   "license": "GPL-3.0-or-later",
   "author": "Ragnar Lothbrok <ragnarlothbrokjr@proton.me>",
   "type": "module",
@@ -17,7 +17,8 @@
     "start": "bun src/index.ts",
     "test:movie": "bun src/index.ts --test movie",
     "test:show": "bun src/index.ts --test show",
-    "type-check": "tsc --noEmit"
+    "type-check": "tsc --noEmit",
+    "test": "bun --no-env-file test tests"
   },
   "dependencies": {
     "@xhayper/discord-rpc": "^1.5.1",
